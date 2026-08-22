@@ -1,0 +1,176 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --teal-50:  #F2F5F5;
+    --teal-100: #E0E8E8;
+    --teal-200: #C0D2D1;
+    --teal-300: #9CB8B6;
+    --teal-400: #6A9592;
+    --teal-500: #407673;
+    --teal-600: #1E5E5A;
+    --teal-700: #1A4E4A;
+    --teal-800: #163F3C;
+    --teal-900: #12302E;
+
+    --mint-50:  #F4FAF9;
+    --mint-100: #E6F4F2;
+    --mint-200: #CEE9E5;
+    --mint-300: #B2DCD6;
+    --mint-400: #8BCAC2;
+    --mint-500: #69BBB0;
+    --mint-600: #4FAFA2;
+    --mint-700: #408D83;
+    --mint-800: #326E66;
+    --mint-900: #244F49;
+
+    --ice-50:  #EFF9F7;
+    --ice-100: #D6EFEB;
+    --ice-200: #B5D5D1;
+
+    --help-50:  #FBF1E7;
+    --help-500: #C97B3D;
+    --help-600: #B5652A;
+
+    /* Semantic Variables (Light Mode) */
+    --bg-primary: var(--ice-50);
+    --bg-secondary: #FFFFFF;
+    --text-primary: var(--teal-800);
+    --text-secondary: var(--teal-700);
+    --text-heading: var(--teal-600);
+    --text-on-accent: #FFFFFF;
+    
+    --border-subtle: var(--teal-200);
+    --border-focus: var(--mint-600);
+    
+    --accent-base: var(--mint-600);
+    --accent-hover: var(--mint-700);
+    --accent-subtle: var(--mint-100);
+
+    /* Glass */
+    --glass-bg: rgba(255, 255, 255, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-shadow: rgba(30, 94, 90, 0.04);
+    --glass-barrier: rgba(255, 255, 255, 0.85);
+
+    /* Nav Glass (always on) — light mode: very white, luminous bottom edge */
+    --nav-glass-bg: rgba(242, 245, 245, 0.72);  /* teal-50 at 72% */
+    --nav-glass-border: rgba(192, 210, 209, 0.55); /* teal-200 at 55% */
+    --nav-glass-shadow: rgba(30, 94, 90, 0.06);
+    --nav-glass-fallback: rgba(242, 245, 245, 0.96);
+    
+    /* Motion */
+    --ease-calm: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-fast: 200ms;
+    --duration-base: 350ms;
+    --duration-modal: 400ms;
+  }
+
+  .dark {
+    --bg-primary: #0A1918;
+    --bg-secondary: #102422;
+    --text-primary: var(--teal-50);
+    --text-secondary: var(--teal-100);
+    --text-heading: var(--teal-100);
+    --text-on-accent: #FFFFFF;
+    
+    --border-subtle: var(--teal-800);
+    --border-focus: var(--mint-500);
+    
+    --accent-base: var(--mint-600);
+    --accent-hover: var(--mint-500);
+    --accent-subtle: rgba(79, 175, 162, 0.15);
+
+    /* Dark Mode Glass */
+    --glass-bg: rgba(16, 36, 34, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: rgba(0, 0, 0, 0.2);
+    --glass-barrier: rgba(10, 25, 24, 0.85);
+
+    /* Nav Glass — dark mode: deep teal with slight luminous edge */
+    --nav-glass-bg: rgba(10, 25, 24, 0.70);
+    --nav-glass-border: rgba(79, 175, 162, 0.18); /* mint-600 at 18% — thin glow */
+    --nav-glass-shadow: rgba(0, 0, 0, 0.30);
+    --nav-glass-fallback: rgba(10, 25, 24, 0.97);
+  }
+
+  body {
+    @apply bg-bg-primary text-fg-primary font-sans antialiased selection:bg-mint-200 selection:text-teal-900 transition-colors duration-base;
+  }
+}
+
+@layer components {
+  .calm-glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px 0 var(--glass-shadow);
+  }
+
+  /* Fallback for browsers without backdrop-filter */
+  @supports not (backdrop-filter: blur(20px)) {
+    .calm-glass-panel {
+      background: var(--glass-barrier);
+    }
+  }
+
+  .calm-glass-barrier {
+    position: absolute;
+    inset: 0;
+    background: var(--glass-barrier);
+    z-index: -1;
+    border-radius: inherit;
+  }
+  
+  /* Focus Utilities */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary;
+  }
+
+  /* Nav — always frosted glass, Emotiv-style: strong backdrop blur, thin luminous border bottom */
+  .nav-glass {
+    background: var(--nav-glass-bg);
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    border-bottom: 1px solid var(--nav-glass-border);
+    box-shadow: 0 1px 0 0 var(--nav-glass-border), 0 4px 24px 0 var(--nav-glass-shadow);
+  }
+
+  /* Nav logo brand name — Inter with tight tracking, slightly heavier, like Emotiv's wordmark */
+  .nav-wordmark {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    font-optical-sizing: auto;
+    font-variation-settings: 'opsz' 20;
+  }
+
+  @supports not (backdrop-filter: blur(24px)) {
+    .nav-glass {
+      background: var(--nav-glass-fallback);
+    }
+  }
+}
+
+/* Reduced Motion Fallbacks */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 10ms !important;
+    --duration-base: 10ms !important;
+    --duration-modal: 10ms !important;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
