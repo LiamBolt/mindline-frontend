@@ -3,14 +3,23 @@ import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import SelfImprovementRoundedIcon from '@mui/icons-material/SelfImprovementRounded';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import type { SvgIconComponent } from '@mui/icons-material';
 import { cn } from '../../utils/cn';
 
-const tabs = [
+type Tab = {
+  name: string;
+  path: string;
+  icon: SvgIconComponent;
+  isPrimary?: boolean;
+  isHelp?: boolean;
+};
+
+const tabs: Tab[] = [
   { name: 'Home', path: '/', icon: HomeRoundedIcon },
   { name: 'Check-in', path: '/check-in', icon: SelfImprovementRoundedIcon, isPrimary: true },
   { name: 'Help', path: '/help', icon: SupportAgentRoundedIcon, isHelp: true },
   { name: 'More', path: '/settings', icon: MenuRoundedIcon },
-] as const;
+];
 
 export default function BottomTabBar() {
   return (
