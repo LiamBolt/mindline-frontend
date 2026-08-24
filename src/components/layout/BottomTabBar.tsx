@@ -10,13 +10,12 @@ type Tab = {
   name: string;
   path: string;
   icon: SvgIconComponent;
-  isPrimary?: boolean;
   isHelp?: boolean;
 };
 
 const tabs: Tab[] = [
   { name: 'Home', path: '/', icon: HomeRoundedIcon },
-  { name: 'Check-in', path: '/check-in', icon: SelfImprovementRoundedIcon, isPrimary: true },
+  { name: 'Check-in', path: '/check-in', icon: SelfImprovementRoundedIcon },
   { name: 'Help', path: '/help', icon: SupportAgentRoundedIcon, isHelp: true },
   { name: 'More', path: '/settings', icon: MenuRoundedIcon },
 ];
@@ -33,11 +32,11 @@ export default function BottomTabBar() {
               to={tab.path}
               end
               className={({ isActive }) => cn(
-                "flex flex-col items-center justify-center w-full h-full space-y-1 focus-ring rounded-xl transition-colors duration-fast",
+                "flex flex-col items-center justify-center w-full h-full gap-1 focus-ring rounded-xl transition-colors duration-fast",
                 isActive
-                  ? "text-teal-800 dark:text-teal-100"
-                  : "text-teal-600 dark:text-teal-300",
-                tab.isHelp && "text-help-600 dark:text-help-500",
+                  ? "text-teal-800 dark:text-teal-50"
+                  : "text-teal-600/80 dark:text-teal-300/80",
+                tab.isHelp && !isActive && "text-help-600/80 dark:text-help-500/80",
                 tab.isHelp && isActive && "text-help-600 dark:text-help-500"
               )}
             >
@@ -45,21 +44,19 @@ export default function BottomTabBar() {
                 <>
                   <div
                     className={cn(
-                      "relative flex items-center justify-center rounded-full transition-all duration-fast",
-                      tab.isPrimary ? "w-12 h-8" : "w-8 h-8",
-                      isActive && tab.isPrimary && "bg-mint-100 dark:bg-mint-900",
-                      isActive && !tab.isPrimary && "scale-110"
+                      "flex items-center justify-center w-[52px] h-8 rounded-full transition-colors duration-fast",
+                      isActive && !tab.isHelp && "bg-mint-100 dark:bg-mint-900/80",
+                      isActive && tab.isHelp && "bg-help-50 dark:bg-help-600/20"
                     )}
                   >
-                    <Icon fontSize={tab.isPrimary ? "medium" : "small"} />
-                    {isActive && (
-                      <span
-                        className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-current"
-                        aria-hidden
-                      />
-                    )}
+                    <Icon fontSize="small" />
                   </div>
-                  <span className="text-[10px] font-medium tracking-wide">
+                  <span
+                    className={cn(
+                      "text-[11px] tracking-wide",
+                      isActive ? "font-semibold" : "font-medium"
+                    )}
+                  >
                     {tab.name}
                   </span>
                 </>
