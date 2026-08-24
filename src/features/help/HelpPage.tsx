@@ -20,7 +20,7 @@ export default function HelpPage() {
             >
               <div>
                 <h2 className="font-medium text-fg-primary">{contact.label}</h2>
-                <p className="text-fg-secondary text-sm mt-1">{contact.tel}</p>
+                <p className="text-fg-secondary text-sm mt-1">{contact.display}</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-help-600 text-white flex items-center justify-center flex-shrink-0">
                 <PhoneRoundedIcon fontSize="small" />

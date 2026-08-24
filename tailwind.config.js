@@ -67,7 +67,7 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'Manrope', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        sans: ['Poppins', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
       },
       transitionTimingFunction: {
         'calm': 'var(--ease-calm)',

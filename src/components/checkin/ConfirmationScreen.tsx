@@ -21,7 +21,7 @@ export default function ConfirmationScreen() {
         <div className="absolute inset-8 bg-mint-500 dark:bg-teal-700 rounded-full" />
       </div>
 
-      <h2 className="text-3xl font-semibold text-fg-heading mb-4">
+      <h2 className="text-3xl font-semibold text-fg-heading mb-4" aria-live="polite">
         Thank you for checking in.
       </h2>
       

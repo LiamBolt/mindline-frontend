@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCheckinDraftStore } from '../../stores/checkinDraftStore';
@@ -19,47 +19,63 @@ export default function CheckinFlow() {
   const navigate = useNavigate();
   const { initializeIdentity, anonId } = useIdentityStore();
   const { hasBeenAsked, setConsent } = useConsentStore();
-  const { 
-    currentStepIndex, answers, 
-    nextStep, prevStep, setAnswer, clearDraft 
+  const {
+    currentStepIndex, answers,
+    nextStep, prevStep, setAnswer, clearDraft
   } = useCheckinDraftStore();
 
   const [direction, setDirection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const submitLock = useRef(false);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const advancingRef = useRef(false);
 
-  // Initialize identity if not present
   useEffect(() => {
     initializeIdentity();
   }, [initializeIdentity]);
 
-  // Total steps = consent (if needed) + questions
+  useEffect(() => {
+    return () => {
+      if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    };
+  }, []);
+
+  // Consent is step 0 only until it has been answered. After that, step 0 is question 0
+  // (do not also call nextStep on consent — that skipped the first question).
   const showConsentStep = !hasBeenAsked && currentStepIndex === 0;
-  
-  // Calculate question index (adjusting for consent step if it exists and hasn't been asked)
   const questionIndex = hasBeenAsked ? currentStepIndex : currentStepIndex - 1;
   const isQuestionStep = questionIndex >= 0 && questionIndex < CHECKIN_QUESTIONS.length;
-  const isConfirmation = questionIndex >= CHECKIN_QUESTIONS.length;
+  const isPastLastQuestion = hasBeenAsked && currentStepIndex >= CHECKIN_QUESTIONS.length;
 
   useEffect(() => {
-    if (isConfirmation && !isDone && !isSubmitting) {
-      submitCheckin();
+    if (!isPastLastQuestion || isDone || isSubmitting || submitLock.current || !anonId) {
+      return;
     }
-  }, [isConfirmation, isDone, isSubmitting]);
+    submitLock.current = true;
+    void submitCheckin();
+  }, [isPastLastQuestion, isDone, isSubmitting, anonId]);
 
   const submitCheckin = async () => {
-    if (!anonId) return;
+    const id = useIdentityStore.getState().anonId;
+    if (!id) {
+      submitLock.current = false;
+      return;
+    }
     setIsSubmitting(true);
     try {
+      const latestAnswers = useCheckinDraftStore.getState().answers;
       await checkinService.submitCheckin({
-        anonId,
-        answers,
+        anonId: id,
+        answers: latestAnswers,
       });
       setIsDone(true);
+      // Clear persisted draft so a refresh starts a new check-in, but keep isDone
+      // so this session stays on the thank-you screen instead of looping questions.
       clearDraft();
     } catch (error) {
       console.error('Failed to submit check-in', error);
-      // In a real app, handle error state
+      submitLock.current = false;
     } finally {
       setIsSubmitting(false);
     }
@@ -68,6 +84,7 @@ export default function CheckinFlow() {
   const handleNext = () => {
     setDirection(1);
     nextStep();
+    advancingRef.current = false;
   };
 
   const handlePrev = () => {
@@ -80,20 +97,23 @@ export default function CheckinFlow() {
   };
 
   const handleConsent = (optedIn: boolean) => {
+    setDirection(1);
     setConsent(optedIn);
-    handleNext();
   };
 
   const handleAnswerSelect = (value: number) => {
+    if (advancingRef.current || questionIndex < 0 || questionIndex >= CHECKIN_QUESTIONS.length) {
+      return;
+    }
+    advancingRef.current = true;
     const qId = CHECKIN_QUESTIONS[questionIndex].id;
     setAnswer(qId, value);
-    // Auto-advance after a short delay for better UX
-    setTimeout(() => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    advanceTimer.current = setTimeout(() => {
       handleNext();
     }, 400);
   };
 
-  // Animation variants
   const variants = {
     enter: (direction: number) => ({
       x: direction > 0 ? 50 : -50,
@@ -109,20 +129,20 @@ export default function CheckinFlow() {
     }),
   };
 
-  if (isConfirmation) {
-    if (isSubmitting) {
-      return (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-16 h-16 bg-ice-100 dark:bg-mint-900/50 rounded-full animate-pulse" />
-        </div>
-      );
-    }
+  if (isDone) {
     return <ConfirmationScreen />;
+  }
+
+  if (isPastLastQuestion) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-16 h-16 bg-ice-100 dark:bg-mint-900/50 rounded-full animate-pulse" />
+      </div>
+    );
   }
 
   return (
     <div className="flex-1 flex flex-col px-4 pt-4 overflow-hidden relative max-w-3xl mx-auto w-full">
-      {/* Top Bar Area */}
       <div className="flex items-center justify-between mb-2 z-10 bg-bg-primary">
         <button
           onClick={handlePrev}
@@ -142,21 +162,19 @@ export default function CheckinFlow() {
           )}
         </div>
         
-        {/* Placeholder to balance the flex container if we want something on the right */}
         <div className="w-10"></div>
       </div>
 
-      {/* Main Content Area with AnimatePresence */}
       <div className="flex-1 relative w-full overflow-y-auto overflow-x-hidden">
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
-            key={currentStepIndex}
+            key={showConsentStep ? 'consent' : `q-${questionIndex}`}
             custom={direction}
             variants={variants}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ type: 'tween', duration: 0.3, ease: [0.16, 1, 0.3, 1] }} // var(--ease-calm)
+            transition={{ type: 'tween', duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className="absolute inset-0 w-full"
           >
             {showConsentStep ? (

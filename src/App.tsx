@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useA11yStore } from './stores/a11yStore';
 // Layouts
 import AppShell from './components/layout/AppShell';
+import ErrorBoundary from './components/ErrorBoundary';
 // Features (Placeholders for now)
 const LandingPage = React.lazy(() => import('./features/landing/LandingPage'));
 const HowItWorksPage = React.lazy(() => import('./features/landing/HowItWorksPage'));
@@ -58,20 +59,22 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <AppShell>
-        <React.Suspense fallback={<div className="flex h-screen items-center justify-center p-4">Loading...</div>}>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/how-it-works" element={<HowItWorksPage />} />
-            <Route path="/check-in" element={<CheckinFlow />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/help" element={<HelpPage />} />
-            <Route path="/counsellor" element={<CounsellorDashboard />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </React.Suspense>
-      </AppShell>
+      <ErrorBoundary>
+        <AppShell>
+          <React.Suspense fallback={<div className="flex h-screen items-center justify-center p-4">Loading...</div>}>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/how-it-works" element={<HowItWorksPage />} />
+              <Route path="/check-in" element={<CheckinFlow />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/help" element={<HelpPage />} />
+              <Route path="/counsellor" element={<CounsellorDashboard />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </React.Suspense>
+        </AppShell>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

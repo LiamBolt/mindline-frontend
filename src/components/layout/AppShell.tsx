@@ -13,7 +13,7 @@ export default function AppShell({ children }: AppShellProps) {
   const isCheckinFlow = location.pathname.startsWith('/check-in');
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen font-sans">
       {/* Top Navigation - Always visible on desktop, visible on mobile except in checkin flow */}
       <TopNav isCheckin={isCheckinFlow} />
 

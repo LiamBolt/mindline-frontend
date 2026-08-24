@@ -1,6 +1,23 @@
-
-import * as Icons from '@mui/icons-material';
+import BedtimeRounded from '@mui/icons-material/BedtimeRounded';
+import RestaurantRounded from '@mui/icons-material/RestaurantRounded';
+import LayersRounded from '@mui/icons-material/LayersRounded';
+import Groups2Rounded from '@mui/icons-material/Groups2Rounded';
+import CenterFocusWeakRounded from '@mui/icons-material/CenterFocusWeakRounded';
+import BoltRounded from '@mui/icons-material/BoltRounded';
+import SentimentSatisfiedAltRounded from '@mui/icons-material/SentimentSatisfiedAltRounded';
+import HelpRounded from '@mui/icons-material/HelpRounded';
+import type { SvgIconComponent } from '@mui/icons-material';
 import { cn } from '../../utils/cn';
+
+const QUESTION_ICONS: Record<string, SvgIconComponent> = {
+  BedtimeRounded,
+  RestaurantRounded,
+  LayersRounded,
+  Groups2Rounded,
+  CenterFocusWeakRounded,
+  BoltRounded,
+  SentimentSatisfiedAltRounded,
+};
 
 interface QuestionStepProps {
   question: {
@@ -14,8 +31,7 @@ interface QuestionStepProps {
 }
 
 export default function QuestionStep({ question, selectedValue, onSelect }: QuestionStepProps) {
-  // Dynamically resolve the icon from MUI
-  const IconComponent = (Icons as any)[question.icon] || Icons.HelpRounded;
+  const IconComponent = QUESTION_ICONS[question.icon] || HelpRounded;
 
   return (
     <div className="flex flex-col h-full max-w-xl mx-auto w-full pt-4 pb-20">

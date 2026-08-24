@@ -33,7 +33,7 @@ export default function TopNav({ isCheckin }: TopNavProps) {
                   alt="MindLine Logo"
                   className="h-8 w-8 rounded-lg object-cover"
                 />
-                <span className="nav-wordmark text-xl text-fg-heading">
+                <span className="nav-wordmark font-sans text-xl text-fg-heading">
                   MindLine
                 </span>
               </Link>
