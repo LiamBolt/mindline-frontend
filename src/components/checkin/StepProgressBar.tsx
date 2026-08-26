@@ -19,7 +19,7 @@ export default function StepProgressBar({ currentStep, totalSteps, label }: Step
       )}
       <div className="h-1.5 w-full bg-border-subtle rounded-full overflow-hidden" role="progressbar" aria-valuenow={percentage} aria-valuemin={0} aria-valuemax={100}>
         <motion.div 
-          className="h-full bg-mint-600 rounded-full"
+          className="h-full brand-fill rounded-full"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}

@@ -11,22 +11,18 @@ interface AppShellProps {
 export default function AppShell({ children }: AppShellProps) {
   const location = useLocation();
   const isCheckinFlow = location.pathname.startsWith('/check-in');
+  const isCounsellor = location.pathname.startsWith('/counsellor');
 
   return (
     <div className="flex flex-col min-h-screen font-sans">
-      {/* Top Navigation - Always visible on desktop, visible on mobile except in checkin flow */}
-      <TopNav isCheckin={isCheckinFlow} />
+      {!isCounsellor && <TopNav isCheckin={isCheckinFlow} />}
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col pt-16 lg:pt-20 pb-20 lg:pb-0 relative">
+      <main className={isCounsellor ? 'flex-1 flex flex-col relative' : 'flex-1 flex flex-col pt-16 lg:pt-20 pb-20 lg:pb-0 relative'}>
         {children}
       </main>
 
-      {/* Mobile Bottom Navigation - Visible on mobile only (<1024px) */}
-      {!isCheckinFlow && <BottomTabBar />}
-
-      {/* Floating Action Buttons - Visible on desktop only (>=1024px) */}
-      <HelpFAB />
+      {!isCheckinFlow && !isCounsellor && <BottomTabBar />}
+      {!isCounsellor && <HelpFAB />}
     </div>
   );
 }

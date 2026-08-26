@@ -4,31 +4,36 @@
 
 @layer base {
   :root {
-    --teal-50:  #F2F5F5;
-    --teal-100: #E0E8E8;
-    --teal-200: #C0D2D1;
-    --teal-300: #9CB8B6;
-    --teal-400: #6A9592;
-    --teal-500: #407673;
-    --teal-600: #1E5E5A;
-    --teal-700: #1A4E4A;
-    --teal-800: #163F3C;
-    --teal-900: #12302E;
+    --teal-50:  #F3F6FF;
+    --teal-100: #E4EAF8;
+    --teal-200: #C5D0EA;
+    --teal-300: #8FA0C4;
+    --teal-400: #5B6FA0;
+    --teal-500: #3A4D80;
+    --teal-600: #243564;
+    --teal-700: #18264A;
+    --teal-800: #0F1C3A;
+    --teal-900: #0A192F;
 
-    --mint-50:  #F4FAF9;
-    --mint-100: #E6F4F2;
-    --mint-200: #CEE9E5;
-    --mint-300: #B2DCD6;
-    --mint-400: #8BCAC2;
-    --mint-500: #69BBB0;
-    --mint-600: #4FAFA2;
-    --mint-700: #408D83;
-    --mint-800: #326E66;
-    --mint-900: #244F49;
+    --mint-50:  #E6FAFF;
+    --mint-100: #CFF4FF;
+    --mint-200: #A6EBFF;
+    --mint-300: #6DDDFF;
+    --mint-400: #2ECFFF;
+    --mint-500: #00B8E8;
+    --mint-600: #0099D1;
+    --mint-700: #0078B8;
+    --mint-800: #0A5F96;
+    --mint-900: #0B4570;
 
-    --ice-50:  #EFF9F7;
-    --ice-100: #D6EFEB;
-    --ice-200: #B5D5D1;
+    --ice-50:  #F5F8FF;
+    --ice-100: #E8EEFF;
+    --ice-200: #D4DFFF;
+
+    --brand-cyan: #00C2E8;
+    --brand-blue: #3D6BFF;
+    --brand-purple: #8B4DFF;
+    --brand-gradient: linear-gradient(90deg, #00C2E8 0%, #3D6BFF 50%, #8B4DFF 100%);
 
     --help-50:  #FBF1E7;
     --help-500: #C97B3D;
@@ -39,7 +44,7 @@
     --bg-secondary: #FFFFFF;
     --text-primary: var(--teal-800);
     --text-secondary: var(--teal-700);
-    --text-heading: var(--teal-600);
+    --text-heading: var(--teal-900);
     --text-on-accent: #FFFFFF;
     
     --border-subtle: var(--teal-200);
@@ -56,10 +61,10 @@
     --glass-barrier: rgba(255, 255, 255, 0.85);
 
     /* Nav Glass (always on) — light mode: very white, luminous bottom edge */
-    --nav-glass-bg: rgba(242, 245, 245, 0.72);  /* teal-50 at 72% */
-    --nav-glass-border: rgba(192, 210, 209, 0.55); /* teal-200 at 55% */
-    --nav-glass-shadow: rgba(30, 94, 90, 0.06);
-    --nav-glass-fallback: rgba(242, 245, 245, 0.96);
+    --nav-glass-bg: rgba(245, 248, 255, 0.78);
+    --nav-glass-border: rgba(197, 208, 234, 0.65);
+    --nav-glass-shadow: rgba(10, 25, 47, 0.06);
+    --nav-glass-fallback: rgba(245, 248, 255, 0.96);
     
     /* Motion */
     --ease-calm: cubic-bezier(0.16, 1, 0.3, 1);
@@ -69,8 +74,8 @@
   }
 
   .dark {
-    --bg-primary: #0A1918;
-    --bg-secondary: #102422;
+    --bg-primary: #070E1C;
+    --bg-secondary: #0F1A33;
     --text-primary: var(--teal-50);
     --text-secondary: var(--teal-100);
     --text-heading: var(--teal-100);
@@ -84,16 +89,16 @@
     --accent-subtle: rgba(79, 175, 162, 0.15);
 
     /* Dark Mode Glass */
-    --glass-bg: rgba(16, 36, 34, 0.55);
+    --glass-bg: rgba(15, 26, 51, 0.55);
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-shadow: rgba(0, 0, 0, 0.2);
-    --glass-barrier: rgba(10, 25, 24, 0.85);
+    --glass-barrier: rgba(7, 14, 28, 0.85);
 
     /* Nav Glass — dark mode: deep teal with slight luminous edge */
-    --nav-glass-bg: rgba(10, 25, 24, 0.70);
-    --nav-glass-border: rgba(79, 175, 162, 0.18); /* mint-600 at 18% — thin glow */
+    --nav-glass-bg: rgba(7, 14, 28, 0.72);
+    --nav-glass-border: rgba(61, 107, 255, 0.22);
     --nav-glass-shadow: rgba(0, 0, 0, 0.30);
-    --nav-glass-fallback: rgba(10, 25, 24, 0.97);
+    --nav-glass-fallback: rgba(7, 14, 28, 0.97);
   }
 
   html,
@@ -157,6 +162,18 @@
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
     letter-spacing: -0.03em;
+  }
+
+  .btn-brand {
+    background-image: var(--brand-gradient);
+    color: #fff;
+  }
+  .btn-brand:hover {
+    filter: brightness(1.05);
+  }
+
+  .brand-fill {
+    background-image: var(--brand-gradient);
   }
 
   @supports not (backdrop-filter: blur(24px)) {

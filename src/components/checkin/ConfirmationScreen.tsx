@@ -18,7 +18,7 @@ export default function ConfirmationScreen() {
           animate={{ scale: [1, 1.1, 1] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
         />
-        <div className="absolute inset-8 bg-mint-500 dark:bg-teal-700 rounded-full" />
+        <div className="absolute inset-8 brand-fill rounded-full" />
       </div>
 
       <h2 className="text-3xl font-semibold text-fg-heading mb-4" aria-live="polite">
@@ -31,7 +31,7 @@ export default function ConfirmationScreen() {
 
       <Link
         to="/"
-        className="px-10 py-4 bg-teal-800 hover:bg-teal-900 text-white dark:bg-mint-700 dark:hover:bg-mint-800 rounded-2xl text-lg font-medium transition-colors focus-ring shadow-sm"
+        className="px-10 py-4 btn-brand rounded-2xl text-lg font-medium focus-ring shadow-sm"
       >
         Done
       </Link>

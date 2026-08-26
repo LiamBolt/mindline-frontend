@@ -20,7 +20,7 @@ export default function LandingPage() {
 
       <Link
         to="/check-in"
-        className="px-8 py-4 bg-mint-700 hover:bg-mint-800 text-white text-lg font-medium rounded-full shadow-md transition-all hover:shadow-lg focus-ring mb-4 flex-shrink-0"
+        className="px-8 py-4 btn-brand text-white text-lg font-medium rounded-full shadow-md transition-all hover:shadow-lg focus-ring mb-4 flex-shrink-0"
       >
         Start your check-in
       </Link>

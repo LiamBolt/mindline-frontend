@@ -19,12 +19,18 @@ export interface TrendResult {
 }
 
 export interface CounsellorSignal {
-  id: string; // The anonymized signal ID, distinct from user ID for privacy
-  anonId: string; // Shown as e.g., ML-7F3K2Q
+  id: string;
+  anonId: string;
   lastCheckinDate: string;
   trendDirection: 'improving' | 'steady' | 'worsening';
   consentOptedIn: boolean;
   status: 'reviewed' | 'contacted' | 'closed' | 'new';
-  history: CheckinRecord[]; // Recent history for sparkline
-  isDemoData?: boolean; // True if seeded mock data
+  history: CheckinRecord[];
+  isDemoData?: boolean;
+  studentName?: string;
+  contactDetail?: string;
+  faculty?: string;
+  notes?: string;
+  lastActionAt?: string;
+  elevatedAreas?: string[];
 }

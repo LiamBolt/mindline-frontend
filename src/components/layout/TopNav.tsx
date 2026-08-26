@@ -27,15 +27,12 @@ export default function TopNav({ isCheckin }: TopNavProps) {
 
             {/* Logo + Wordmark */}
             <div className="flex-shrink-0">
-              <Link to="/" className="flex items-center space-x-2.5 focus-ring rounded-lg px-1 py-1">
+              <Link to="/" className="flex items-center focus-ring rounded-lg px-1 py-1">
                 <img
                   src={logo}
-                  alt="MindLine Logo"
-                  className="h-8 w-8 rounded-lg object-cover"
+                  alt="MindLine"
+                  className="h-11 w-auto max-w-[148px] object-contain"
                 />
-                <span className="nav-wordmark font-sans text-xl text-fg-heading">
-                  MindLine
-                </span>
               </Link>
             </div>
 
@@ -52,8 +49,8 @@ export default function TopNav({ isCheckin }: TopNavProps) {
                   to={to}
                   className={cn(
                     "px-4 py-2 rounded-full text-sm font-medium transition-all focus-ring",
-                    location.pathname === to
-                      ? "text-teal-800 dark:text-teal-100 bg-teal-100/60 dark:bg-teal-800/30"
+                    location.pathname === to || (to === '/counsellor' && location.pathname.startsWith('/counsellor'))
+                      ? "text-teal-900 dark:text-white bg-mint-100/80 dark:bg-mint-900/40"
                       : "text-fg-secondary hover:text-fg-heading hover:bg-teal-100/40 dark:hover:bg-teal-800/20"
                   )}
                 >
@@ -78,7 +75,7 @@ export default function TopNav({ isCheckin }: TopNavProps) {
               {location.pathname !== '/check-in' && (
                 <Link
                   to="/check-in"
-                  className="inline-flex items-center justify-center px-5 py-2 rounded-full text-sm font-semibold text-white bg-mint-700 hover:bg-mint-600 transition-all focus-ring shadow-sm hover:shadow-md"
+                  className="inline-flex items-center justify-center px-5 py-2 rounded-full text-sm font-semibold text-white btn-brand transition-all focus-ring shadow-sm hover:shadow-md"
                 >
                   Start check-in
                 </Link>

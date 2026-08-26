@@ -12,6 +12,7 @@ export interface ProcessSignalInput {
 export interface DashboardService {
   listSignals(): Promise<CounsellorSignal[]>;
   updateSignalStatus(id: string, status: CounsellorSignal['status']): Promise<void>;
+  updateSignal(id: string, patch: Partial<CounsellorSignal>): Promise<void>;
   processSignal(input: ProcessSignalInput): Promise<void>;
   seedMockCounsellorData(): Promise<void>;
 }

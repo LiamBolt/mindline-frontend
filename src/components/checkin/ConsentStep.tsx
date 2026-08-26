@@ -30,7 +30,7 @@ export default function ConsentStep({ onSelect }: ConsentStepProps) {
       <div className="space-y-4 mt-auto">
         <button
           onClick={() => onSelect(true)}
-          className="w-full py-4 px-6 bg-mint-700 hover:bg-mint-800 text-white rounded-2xl text-lg font-medium transition-colors focus-ring shadow-sm"
+          className="w-full py-4 px-6 btn-brand rounded-2xl text-lg font-medium transition-colors focus-ring shadow-sm"
         >
           Yes, you can contact me if needed
         </button>
