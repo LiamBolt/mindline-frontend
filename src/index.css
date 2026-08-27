@@ -172,8 +172,11 @@
     filter: brightness(1.05);
   }
 
-  .brand-fill {
+  .brand-text-gradient {
     background-image: var(--brand-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   @supports not (backdrop-filter: blur(24px)) {

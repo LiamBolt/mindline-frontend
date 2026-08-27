@@ -5,11 +5,12 @@ import type { CounsellorSignal } from '../../services/types';
 import { useCounsellorAuthStore } from '../../stores/counsellorAuthStore';
 import { COUNSELLOR_STAFF } from '../../config/counsellorAccess';
 import { cn } from '../../utils/cn';
-import logo from '../../assets/mindline-logo.jpeg';
+import BrandLogo from '../../components/layout/BrandLogo';
 
 import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
 import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
 import InboxRoundedIcon from '@mui/icons-material/InboxRounded';
+import SentimentSatisfiedAltRoundedIcon from '@mui/icons-material/SentimentSatisfiedAltRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
@@ -20,15 +21,19 @@ import TrendingDownRoundedIcon from '@mui/icons-material/TrendingDownRounded';
 import TrendingFlatRoundedIcon from '@mui/icons-material/TrendingFlatRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 
-type View = 'queue' | 'outreach' | 'all' | 'closed' | 'protocol';
+type View = 'queue' | 'outreach' | 'well' | 'all' | 'closed' | 'protocol';
 
 const NAV: { id: View; label: string; icon: typeof InboxRoundedIcon }[] = [
-  { id: 'queue', label: 'New signals', icon: AssignmentRoundedIcon },
+  { id: 'queue', label: 'Needs attention', icon: AssignmentRoundedIcon },
   { id: 'outreach', label: 'Ready to contact', icon: PhoneInTalkRoundedIcon },
-  { id: 'all', label: 'All cases', icon: InboxRoundedIcon },
+  { id: 'well', label: 'Doing well', icon: SentimentSatisfiedAltRoundedIcon },
+  { id: 'all', label: 'All check-ins', icon: InboxRoundedIcon },
   { id: 'closed', label: 'Closed', icon: TaskAltRoundedIcon },
   { id: 'protocol', label: 'How to respond', icon: MenuBookRoundedIcon },
 ];
+
+const isDoingWell = (s: CounsellorSignal) =>
+  s.trendDirection === 'improving' || (s.trendDirection === 'steady' && !s.elevatedAreas?.length);
 
 export default function CounsellorDashboard() {
   const { isSignedIn, staffName, staffEmail, signIn, signOut } = useCounsellorAuthStore();
@@ -60,8 +65,9 @@ export default function CounsellorDashboard() {
   };
 
   const visible = useMemo(() => {
-    if (view === 'queue') return signals.filter((s) => s.status === 'new');
-    if (view === 'outreach') return signals.filter((s) => s.consentOptedIn && s.status !== 'closed');
+    if (view === 'queue') return signals.filter((s) => s.status === 'new' && s.trendDirection === 'worsening');
+    if (view === 'outreach') return signals.filter((s) => s.consentOptedIn && s.status !== 'closed' && s.trendDirection === 'worsening');
+    if (view === 'well') return signals.filter(isDoingWell);
     if (view === 'closed') return signals.filter((s) => s.status === 'closed');
     return signals;
   }, [signals, view]);
@@ -96,12 +102,14 @@ export default function CounsellorDashboard() {
 
   if (!isSignedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-ice-50 dark:bg-teal-900">
+      <div className="h-full min-h-0 flex items-center justify-center p-4 bg-ice-50 dark:bg-teal-900 overflow-auto">
         <div className="w-full max-w-md bg-white dark:bg-bg-secondary rounded-3xl border border-border-subtle shadow-sm p-8">
-          <img src={logo} alt="MindLine" className="h-16 w-auto mx-auto mb-6 object-contain" />
+          <div className="flex justify-center mb-6">
+            <BrandLogo size="lg" to={null} />
+          </div>
           <h1 className="text-2xl font-semibold text-center text-fg-heading">Counselling Unit</h1>
           <p className="text-sm text-fg-secondary text-center mt-2 mb-8">
-            Staff sign-in for MUST counsellors. Students never use this screen.
+            Staff sign-in for MUST counsellors. Students never use this screen. Cases stay anonymous.
           </p>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -155,8 +163,12 @@ export default function CounsellorDashboard() {
     );
   }
 
+  const queueCount = signals.filter((s) => s.status === 'new' && s.trendDirection === 'worsening').length;
+  const outreachCount = signals.filter((s) => s.consentOptedIn && s.status !== 'closed' && s.trendDirection === 'worsening').length;
+  const wellCount = signals.filter(isDoingWell).length;
+
   return (
-    <div className="min-h-screen flex bg-ice-50 dark:bg-bg-primary text-fg-primary">
+    <div className="h-full min-h-0 flex overflow-hidden bg-ice-50 dark:bg-bg-primary text-fg-primary">
       {sidebarOpen && (
         <button
           type="button"
@@ -168,30 +180,29 @@ export default function CounsellorDashboard() {
 
       <aside
         className={cn(
-          'fixed lg:static inset-y-0 left-0 z-40 w-72 bg-white dark:bg-bg-secondary border-r border-border-subtle flex flex-col transition-transform duration-base',
+          'fixed lg:static inset-y-0 left-0 z-40 w-72 shrink-0 bg-white dark:bg-bg-secondary border-r border-border-subtle flex flex-col transition-transform duration-base h-full',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
-        <div className="p-5 border-b border-border-subtle flex items-center justify-between">
-          <Link to="/" className="flex items-center">
-            <img src={logo} alt="MindLine" className="h-12 w-auto object-contain" />
-          </Link>
+        <div className="p-5 border-b border-border-subtle flex items-center justify-between shrink-0">
+          <BrandLogo size="sm" />
           <button type="button" className="lg:hidden p-2 rounded-full focus-ring" onClick={() => setSidebarOpen(false)}>
             <CloseRoundedIcon fontSize="small" />
           </button>
         </div>
 
-        <div className="px-5 py-4 border-b border-border-subtle">
+        <div className="px-5 py-4 border-b border-border-subtle shrink-0">
           <p className="text-sm font-semibold">{staffName}</p>
           <p className="text-xs text-fg-secondary">{staffEmail}</p>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1" aria-label="Counsellor">
+        <nav className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1" aria-label="Counsellor">
           {NAV.map((item) => {
             const Icon = item.icon;
             const count =
-              item.id === 'queue' ? signals.filter((s) => s.status === 'new').length :
-              item.id === 'outreach' ? signals.filter((s) => s.consentOptedIn && s.status !== 'closed').length :
+              item.id === 'queue' ? queueCount :
+              item.id === 'outreach' ? outreachCount :
+              item.id === 'well' ? wellCount :
               undefined;
             return (
               <button
@@ -218,7 +229,7 @@ export default function CounsellorDashboard() {
           })}
         </nav>
 
-        <div className="p-3 border-t border-border-subtle">
+        <div className="p-3 border-t border-border-subtle shrink-0">
           <button
             type="button"
             onClick={signOut}
@@ -230,50 +241,47 @@ export default function CounsellorDashboard() {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 flex items-center gap-3 px-4 border-b border-border-subtle bg-white/80 dark:bg-bg-secondary/80 backdrop-blur">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+        <header className="h-16 shrink-0 flex items-center gap-3 px-4 border-b border-border-subtle bg-ice-50/90 dark:bg-[#0b1630] backdrop-blur-sm">
           <button type="button" className="lg:hidden p-2 rounded-full focus-ring" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
             <MenuRoundedIcon />
           </button>
-          <div>
-            <h1 className="text-lg font-semibold text-fg-heading">
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold text-fg-heading truncate">
               {NAV.find((n) => n.id === view)?.label}
             </h1>
-            <p className="text-xs text-fg-secondary">Referral queue — the counsellor decides the next step, not the app.</p>
+            <p className="text-xs text-fg-secondary truncate">Anonymous IDs only. You decide the next step — the app does not.</p>
           </div>
         </header>
 
         {view === 'protocol' ? (
-          <ProtocolPanel />
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <ProtocolPanel />
+          </div>
         ) : (
-          <div className="flex-1 grid lg:grid-cols-[minmax(0,1fr)_380px] min-h-0">
-            <div className="overflow-auto p-4">
+          <div className="flex-1 min-h-0 grid lg:grid-cols-[minmax(0,1fr)_360px] overflow-hidden">
+            <div className="min-h-0 overflow-y-auto p-4">
               {visible.length === 0 ? (
                 <p className="text-fg-secondary p-8 text-center">Nothing in this list right now.</p>
               ) : (
-                <ul className="space-y-3">
+                <ul className="space-y-2">
                   {visible.map((signal) => (
                     <li key={signal.id}>
                       <button
                         type="button"
                         onClick={() => setSelectedId(signal.id)}
                         className={cn(
-                          'w-full text-left p-4 rounded-2xl border transition-colors focus-ring bg-white dark:bg-bg-secondary',
+                          'w-full text-left p-3.5 rounded-2xl border transition-colors focus-ring bg-white dark:bg-bg-secondary',
                           selected?.id === signal.id ? 'border-mint-500 shadow-sm' : 'border-border-subtle hover:border-mint-300'
                         )}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-semibold">
-                              {signal.consentOptedIn && signal.studentName ? signal.studentName : 'Anonymous student'}
-                            </p>
-                            <p className="text-xs font-mono text-fg-secondary mt-0.5">{signal.anonId}</p>
-                          </div>
-                          <StatusBadge status={signal.status} />
+                          <p className="font-semibold font-mono tracking-wide">{signal.anonId}</p>
+                          {isDoingWell(signal) ? <WellBadge /> : <StatusBadge status={signal.status} />}
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-fg-secondary">
+                        <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-fg-secondary">
                           <TrendChip direction={signal.trendDirection} />
-                          <span>{signal.consentOptedIn ? 'May be contacted' : 'Stay anonymous'}</span>
+                          <span>{signal.consentOptedIn ? 'May be contacted' : 'Anonymous'}</span>
                           <span>{new Date(signal.lastCheckinDate).toLocaleDateString()}</span>
                         </div>
                       </button>
@@ -283,9 +291,9 @@ export default function CounsellorDashboard() {
               )}
             </div>
 
-            <section className="border-t lg:border-t-0 lg:border-l border-border-subtle bg-white dark:bg-bg-secondary overflow-auto p-5">
+            <section className="min-h-0 overflow-y-auto border-t lg:border-t-0 lg:border-l border-border-subtle bg-white dark:bg-bg-secondary p-5">
               {!selected ? (
-                <p className="text-fg-secondary">Select a case to work it.</p>
+                <p className="text-fg-secondary">Select an ID to work it.</p>
               ) : (
                 <CaseDetail
                   signal={selected}
@@ -314,9 +322,17 @@ function TrendChip({ direction }: { direction: CounsellorSignal['trendDirection'
   );
 }
 
+function WellBadge() {
+  return (
+    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-mint-100 text-mint-800 dark:bg-mint-900/50 dark:text-mint-100">
+      Okay
+    </span>
+  );
+}
+
 function StatusBadge({ status }: { status: CounsellorSignal['status'] }) {
   const styles = {
-    new: 'bg-mint-100 text-teal-900 dark:bg-mint-900/50 dark:text-mint-100',
+    new: 'bg-red-50 text-red-800 dark:bg-red-900/40 dark:text-red-100',
     reviewed: 'bg-ice-200 text-teal-800 dark:bg-teal-800 dark:text-ice-100',
     contacted: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200',
     closed: 'bg-teal-100 text-teal-800 dark:bg-teal-800 dark:text-teal-100',
@@ -341,16 +357,16 @@ function CaseDetail({
   onSaveNote: () => void;
   onStatus: (status: CounsellorSignal['status']) => void;
 }) {
+  const well = isDoingWell(signal);
   return (
     <div>
-      <h2 className="text-xl font-semibold text-fg-heading">
-        {signal.consentOptedIn && signal.studentName ? signal.studentName : 'Anonymous student'}
+      <h2 className="text-xl font-semibold font-mono text-fg-heading tracking-wide">
+        {signal.anonId}
       </h2>
-      <p className="text-xs font-mono text-fg-secondary mt-1">{signal.anonId}</p>
-      {signal.faculty && <p className="text-sm text-fg-secondary mt-2">{signal.faculty}</p>}
+      <p className="text-sm text-fg-secondary mt-1">Anonymous check-in ID. No name or faculty is stored here.</p>
 
       <div className="flex flex-wrap gap-2 mt-4">
-        <StatusBadge status={signal.status} />
+        {well ? <WellBadge /> : <StatusBadge status={signal.status} />}
         <span className="text-sm"><TrendChip direction={signal.trendDirection} /></span>
       </div>
 
@@ -363,8 +379,8 @@ function CaseDetail({
       <div className="mt-5 rounded-2xl border border-border-subtle p-4">
         {signal.consentOptedIn ? (
           <>
-            <p className="text-sm font-medium">Student asked to be reachable</p>
-            <p className="text-lg font-semibold mt-1">{signal.contactDetail}</p>
+            <p className="text-sm font-medium">This ID asked to be reachable</p>
+            <p className="text-lg font-semibold mt-1 font-mono">{signal.contactDetail}</p>
             <a href={`tel:${signal.contactDetail?.replace(/\s/g, '')}`} className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-mint-700 dark:text-mint-300">
               <PhoneInTalkRoundedIcon fontSize="small" /> Call on a MUST-approved line
             </a>
@@ -372,7 +388,7 @@ function CaseDetail({
         ) : (
           <p className="text-sm text-fg-secondary flex gap-2">
             <LockRoundedIcon fontSize="small" />
-            This student chose to remain anonymous. You can review the pattern, but you cannot identify or contact them from MindLine.
+            This ID chose to remain anonymous. You can review the pattern, but you cannot identify them from MindLine.
           </p>
         )}
       </div>
@@ -396,52 +412,54 @@ function CaseDetail({
       <textarea
         value={noteDraft}
         onChange={(e) => setNoteDraft(e.target.value)}
-        rows={4}
+        rows={3}
         className="w-full rounded-xl border border-border-subtle p-3 bg-bg-primary text-sm focus:outline-none focus:ring-2 focus:ring-border-focus"
-        placeholder="What did you decide, and why?"
+        placeholder="What did you decide, and why? Do not write a name."
       />
       <button type="button" onClick={onSaveNote} className="mt-2 text-sm font-medium text-mint-700 dark:text-mint-300">
         Save note
       </button>
 
-      <div className="mt-6 space-y-2">
-        <p className="text-xs text-fg-secondary uppercase tracking-wide">Next step</p>
-        <button type="button" onClick={() => onStatus('reviewed')} className="w-full py-3 rounded-xl border border-border-subtle font-medium hover:bg-ice-100 dark:hover:bg-teal-800/40 focus-ring">
-          Mark as reviewed
-        </button>
-        <button
-          type="button"
-          disabled={!signal.consentOptedIn}
-          onClick={() => onStatus('contacted')}
-          className="w-full py-3 rounded-xl font-medium btn-brand focus-ring disabled:opacity-40 disabled:pointer-events-none"
-        >
-          Record that I reached out
-        </button>
-        <button type="button" onClick={() => onStatus('closed')} className="w-full py-3 rounded-xl border border-border-subtle font-medium hover:bg-ice-100 dark:hover:bg-teal-800/40 focus-ring">
-          Close this case
-        </button>
-      </div>
+      {!well && (
+        <div className="mt-6 space-y-2">
+          <p className="text-xs text-fg-secondary uppercase tracking-wide">Next step</p>
+          <button type="button" onClick={() => onStatus('reviewed')} className="w-full py-3 rounded-xl border border-border-subtle font-medium hover:bg-ice-100 dark:hover:bg-teal-800/40 focus-ring">
+            Mark as reviewed
+          </button>
+          <button
+            type="button"
+            disabled={!signal.consentOptedIn}
+            onClick={() => onStatus('contacted')}
+            className="w-full py-3 rounded-xl font-medium btn-brand focus-ring disabled:opacity-40 disabled:pointer-events-none"
+          >
+            Record that I reached out
+          </button>
+          <button type="button" onClick={() => onStatus('closed')} className="w-full py-3 rounded-xl border border-border-subtle font-medium hover:bg-ice-100 dark:hover:bg-teal-800/40 focus-ring">
+            Close this case
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 function ProtocolPanel() {
   return (
-    <div className="max-w-3xl p-6 space-y-6 overflow-auto">
+    <div className="max-w-3xl p-6 space-y-4">
       <p className="text-fg-secondary">
-        MindLine is a referral bridge into MUST counselling — not a diagnosis tool. The counsellor, not the app, decides what happens next.
+        MindLine is a referral bridge into MUST counselling — not a diagnosis tool. Every row is an anonymous ID. The counsellor, not the app, decides what happens next.
       </p>
       <section className="bg-white dark:bg-bg-secondary rounded-2xl border border-border-subtle p-5">
         <h2 className="font-semibold mb-2">1. Review a new signal</h2>
-        <p className="text-sm text-fg-secondary">A flag only appears after a sustained pattern across several check-ins. A single hard week never creates a case. Open the case, look at trend direction and which areas stayed elevated.</p>
+        <p className="text-sm text-fg-secondary">A flag only appears after a sustained pattern across several check-ins. A single hard week never creates a case. Open the ID, look at trend direction and which areas stayed elevated.</p>
       </section>
       <section className="bg-white dark:bg-bg-secondary rounded-2xl border border-border-subtle p-5">
         <h2 className="font-semibold mb-2">2. Respect consent</h2>
-        <p className="text-sm text-fg-secondary">If the student opted in, you may contact them using a MUST-approved method (unit phone line). If they stayed anonymous, you still see the pattern — you just cannot identify them from this screen.</p>
+        <p className="text-sm text-fg-secondary">If they opted in, you may contact them using a MUST-approved method (unit phone line). If they stayed anonymous, you still see the pattern — you cannot identify them from this screen.</p>
       </section>
       <section className="bg-white dark:bg-bg-secondary rounded-2xl border border-border-subtle p-5">
         <h2 className="font-semibold mb-2">3. Decide the next step</h2>
-        <p className="text-sm text-fg-secondary">Use normal professional procedure: review, reach out, or close. Record only the minimum status the workflow needs — reviewed, contacted, or closed — plus a short note for your team.</p>
+        <p className="text-sm text-fg-secondary">Use normal professional procedure: review, reach out, or close. Record only reviewed, contacted, or closed — plus a short note. Do not write a name.</p>
       </section>
       <section className="bg-white dark:bg-bg-secondary rounded-2xl border border-border-subtle p-5">
         <h2 className="font-semibold mb-2">4. Urgent help is separate</h2>

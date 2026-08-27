@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import AccessibilityNewRoundedIcon from '@mui/icons-material/AccessibilityNewRounded';
 import { cn } from '../../utils/cn';
-import logo from '../../assets/mindline-logo.jpeg';
+import BrandLogo from './BrandLogo';
 
 interface TopNavProps {
   isCheckin: boolean;
@@ -25,15 +25,8 @@ export default function TopNav({ isCheckin }: TopNavProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
 
-            {/* Logo + Wordmark */}
             <div className="flex-shrink-0">
-              <Link to="/" className="flex items-center focus-ring rounded-lg px-1 py-1">
-                <img
-                  src={logo}
-                  alt="MindLine"
-                  className="h-11 w-auto max-w-[148px] object-contain"
-                />
-              </Link>
+              <BrandLogo size="sm" />
             </div>
 
             {/* Desktop Nav Links */}

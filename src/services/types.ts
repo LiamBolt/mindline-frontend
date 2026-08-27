@@ -27,9 +27,7 @@ export interface CounsellorSignal {
   status: 'reviewed' | 'contacted' | 'closed' | 'new';
   history: CheckinRecord[];
   isDemoData?: boolean;
-  studentName?: string;
   contactDetail?: string;
-  faculty?: string;
   notes?: string;
   lastActionAt?: string;
   elevatedAreas?: string[];
