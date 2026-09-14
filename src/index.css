@@ -55,13 +55,13 @@
     --accent-subtle: var(--mint-100);
 
     /* Glass */
-    --glass-bg: rgba(255, 255, 255, 0.45);
+    --glass-bg: rgba(255, 255, 255, 0.92);
     --glass-border: rgba(255, 255, 255, 0.6);
     --glass-shadow: rgba(30, 94, 90, 0.04);
     --glass-barrier: rgba(255, 255, 255, 0.85);
 
     /* Nav Glass (always on) — light mode: very white, luminous bottom edge */
-    --nav-glass-bg: rgba(245, 248, 255, 0.78);
+    --nav-glass-bg: rgba(245, 248, 255, 0.96);
     --nav-glass-border: rgba(197, 208, 234, 0.65);
     --nav-glass-shadow: rgba(10, 25, 47, 0.06);
     --nav-glass-fallback: rgba(245, 248, 255, 0.96);
@@ -89,13 +89,13 @@
     --accent-subtle: rgba(79, 175, 162, 0.15);
 
     /* Dark Mode Glass */
-    --glass-bg: rgba(15, 26, 51, 0.55);
+    --glass-bg: rgba(15, 26, 51, 0.94);
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-shadow: rgba(0, 0, 0, 0.2);
     --glass-barrier: rgba(7, 14, 28, 0.85);
 
     /* Nav Glass — dark mode: deep teal with slight luminous edge */
-    --nav-glass-bg: rgba(7, 14, 28, 0.72);
+    --nav-glass-bg: rgba(7, 14, 28, 0.96);
     --nav-glass-border: rgba(61, 107, 255, 0.22);
     --nav-glass-shadow: rgba(0, 0, 0, 0.30);
     --nav-glass-fallback: rgba(7, 14, 28, 0.97);

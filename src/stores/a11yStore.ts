@@ -16,7 +16,7 @@ interface A11yState {
 export const useA11yStore = create<A11yState>()(
   persist(
     (set) => ({
-      theme: 'system',
+      theme: 'light', // Default to light mode
       textSizeMultiplier: 1,
       highContrast: false,
       reduceMotion: false,
@@ -26,7 +26,7 @@ export const useA11yStore = create<A11yState>()(
       setReduceMotion: (reduceMotion) => set({ reduceMotion }),
       reset: () =>
         set({
-          theme: 'system',
+          theme: 'light',
           textSizeMultiplier: 1,
           highContrast: false,
           reduceMotion: false,
@@ -34,6 +34,13 @@ export const useA11yStore = create<A11yState>()(
     }),
     {
       name: 'mindline_a11y',
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2 || !persistedState || persistedState.theme === 'system') {
+          return { ...persistedState, theme: 'light' };
+        }
+        return persistedState;
+      },
     }
   )
 );

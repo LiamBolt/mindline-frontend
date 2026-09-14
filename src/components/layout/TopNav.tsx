@@ -86,8 +86,8 @@ export default function TopNav({ isCheckin }: TopNavProps) {
               ))}
             </nav>
 
-            {/* Desktop Right Actions */}
-            <div className="hidden lg:flex items-center space-x-3">
+            {/* Navigation actions */}
+            <div className="flex items-center space-x-3">
               {/* Accessibility icon */}
               <button
                 ref={a11yTriggerRef}
@@ -99,35 +99,27 @@ export default function TopNav({ isCheckin }: TopNavProps) {
                 <AccessibilityNewRoundedIcon fontSize="small" />
               </button>
 
-              {location.pathname !== '/check-in' && (
-                <Link
-                  to="/check-in"
-                  className="inline-flex items-center justify-center px-5 py-2 rounded-full text-sm font-semibold text-white btn-brand transition-all focus-ring shadow-sm hover:shadow-md"
-                >
-                  Start check-in
-                </Link>
-              )}
-            </div>
-
-            {/* Mobile Right Controls: Accessibility + Innovative Morphing Hamburger */}
-            <div className="flex lg:hidden items-center space-x-1">
-              <button
-                ref={a11yTriggerRef}
-                onClick={() => setA11yOpen(true)}
-                aria-expanded={a11yOpen}
-                aria-label="Accessibility settings"
-                className="p-2 text-fg-secondary hover:text-teal-700 dark:hover:text-mint-400 rounded-full transition-colors focus-ring"
+              <Link
+                to="/settings"
+                aria-label="Settings"
+                aria-current={location.pathname === '/settings' ? 'page' : undefined}
+                className={cn(
+                  'hidden lg:flex p-2 rounded-full transition-colors focus-ring',
+                  location.pathname === '/settings'
+                    ? 'text-teal-900 bg-mint-100/80 dark:text-white dark:bg-mint-900/40'
+                    : 'text-fg-secondary hover:text-teal-700 dark:hover:text-mint-400 hover:bg-teal-100/40 dark:hover:bg-teal-800/30'
+                )}
               >
-                <AccessibilityNewRoundedIcon fontSize="small" />
-              </button>
+                <SettingsRoundedIcon fontSize="small" />
+              </Link>
 
-              {/* Unique Morphing Hamburger Button */}
+              {/* Mobile navigation command menu */}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((prev) => !prev)}
                 aria-expanded={mobileMenuOpen}
-                aria-label="Toggle mobile menu"
-                className="relative flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border-subtle bg-bg-secondary/80 p-2 text-fg-secondary transition-all hover:text-fg-primary focus-ring"
+                aria-label="Toggle navigation menu"
+                className="relative flex lg:hidden h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border-subtle bg-bg-secondary/95 p-2 text-fg-secondary transition-all hover:text-fg-primary focus-ring"
               >
                 <motion.span
                   animate={mobileMenuOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
@@ -145,12 +137,21 @@ export default function TopNav({ isCheckin }: TopNavProps) {
                   className="h-0.5 w-5 rounded-full bg-current origin-center"
                 />
               </button>
+
+              {location.pathname !== '/check-in' && (
+                <Link
+                  to="/check-in"
+                  className="hidden lg:inline-flex items-center justify-center px-5 py-2 rounded-full text-sm font-semibold text-white btn-brand transition-all focus-ring shadow-sm hover:shadow-md"
+                >
+                  Start check-in
+                </Link>
+              )}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Innovative Mobile Navigation Command Dock */}
+      {/* Mobile Navigation Command Dock */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
@@ -169,7 +170,7 @@ export default function TopNav({ isCheckin }: TopNavProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -16, scale: 0.97 }}
               transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-              className="fixed top-20 inset-x-4 z-40 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-3xl border border-border-subtle bg-bg-secondary/95 p-5 shadow-2xl backdrop-blur-2xl lg:hidden"
+              className="fixed top-20 right-4 left-4 z-40 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-3xl border border-border-subtle bg-bg-secondary p-5 shadow-2xl lg:hidden"
             >
               {/* Campus switcher card */}
               <div className="mb-4 flex items-center justify-between rounded-2xl border border-border-subtle bg-bg-primary p-3">
