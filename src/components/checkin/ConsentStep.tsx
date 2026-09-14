@@ -1,4 +1,5 @@
 import PrivacyTipRoundedIcon from '@mui/icons-material/PrivacyTipRounded';
+import { INSTITUTION } from '../../config/institutionConfig';
 
 
 interface ConsentStepProps {
@@ -22,15 +23,16 @@ export default function ConsentStep({ onSelect }: ConsentStepProps) {
             Your check-in is strictly anonymous. We use a random ID on this device to look for patterns over time, but we don't know your name or student number.
           </p>
           <p>
-            If things stay hard for a while, we can optionally have the MUST Counselling Unit reach out to check on you. 
+            If things stay hard for a while, we can optionally have the {INSTITUTION.counsellingUnitLabel} reach out to check on you. 
           </p>
         </div>
+
       </div>
 
       <div className="space-y-4 mt-auto">
         <button
           onClick={() => onSelect(true)}
-          className="w-full py-4 px-6 bg-mint-700 hover:bg-mint-800 text-white rounded-2xl text-lg font-medium transition-colors focus-ring shadow-sm"
+          className="w-full py-4 px-6 btn-brand rounded-2xl text-lg font-medium transition-colors focus-ring shadow-sm"
         >
           Yes, you can contact me if needed
         </button>

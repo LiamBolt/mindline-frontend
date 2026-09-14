@@ -1,109 +1,296 @@
-import type { CounsellorSignal } from '../../types';
+import type { CheckinRecord, CounsellorSignal } from '../../types';
 import type { DashboardService, ProcessSignalInput } from '../../dashboardService';
 
 const STORAGE_KEY = 'mindline_dashboard_signals';
-const SEED_FLAG = 'mindline_dashboard_seeded';
+const SEED_FLAG = 'mindline_dashboard_seeded_v5';
 
-// Mock generation helpers
-const generateMockHistory = (anonId: string, baseDate: Date) => {
-  // Generate 3 past checkins
-  return [2, 1, 0].map(daysAgo => {
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() - daysAgo * 7);
+const daysAgo = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d;
+};
+
+const answers = (level: 'ok' | 'mixed' | 'hard'): Record<string, number> => {
+  if (level === 'ok') {
+    return { sleep: 0, appetite: 0, overwhelm: 0, social: 0, focus: 0, energy: 0, selfRegard: 1 };
+  }
+  if (level === 'mixed') {
+    return { sleep: 1, appetite: 1, overwhelm: 2, social: 1, focus: 2, energy: 1, selfRegard: 2 };
+  }
+  return { sleep: 2, appetite: 2, overwhelm: 3, social: 3, focus: 3, energy: 3, selfRegard: 3 };
+};
+
+const historyFor = (anonId: string, base: Date, pattern: Array<'ok' | 'mixed' | 'hard'>): CheckinRecord[] =>
+  pattern.map((level, i) => {
+    const d = new Date(base);
+    d.setDate(d.getDate() - i * 7);
     return {
-      id: crypto.randomUUID(),
+      id: `seed-${anonId}-${i}`,
       anonId,
       timestamp: d.toISOString(),
-      answers: { sleep: 2, energy: 2 } // Mock answers that trigger flags
+      answers: answers(level),
     };
   });
-};
 
 export const localDashboardAdapter: DashboardService = {
   async listSignals(): Promise<CounsellorSignal[]> {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    await this.seedMockCounsellorData();
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
   },
 
   async updateSignalStatus(id: string, status: CounsellorSignal['status']): Promise<void> {
     const signals = await this.listSignals();
-    const updated = signals.map(sig => sig.id === id ? { ...sig, status } : sig);
+    const updated = signals.map((s) => (s.id === id ? { ...s, status, lastActionAt: new Date().toISOString() } : s));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  },
+
+  async updateSignal(id: string, patch: Partial<CounsellorSignal>): Promise<void> {
+    const signals = await this.listSignals();
+    const updated = signals.map((s) => (s.id === id ? { ...s, ...patch, lastActionAt: new Date().toISOString() } : s));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   },
 
   async processSignal(input: ProcessSignalInput): Promise<void> {
     const signals = await this.listSignals();
-    // Check if signal for this anonId already exists
-    const existingIndex = signals.findIndex(s => s.anonId === input.anonId);
-    
+    const existingIndex = signals.findIndex((s) => s.anonId === input.anonId);
+    // Set referralRecommendedAt when a flagged trend triggers this signal.
+    // Only set it if not already set — preserve the original timestamp.
+    const now = new Date().toISOString();
+
     if (existingIndex >= 0) {
-      // Update existing
+      const existing = signals[existingIndex];
       signals[existingIndex] = {
-        ...signals[existingIndex],
+        ...existing,
         lastCheckinDate: input.lastCheckinDate,
         trendDirection: input.trendDirection,
         consentOptedIn: input.consentOptedIn,
         history: input.history,
-        // Reset status to new if it worsened again, else keep it
-        status: input.trendDirection === 'worsening' ? 'new' : signals[existingIndex].status
+        status: input.trendDirection === 'worsening' ? 'new' : existing.status,
+        ...(input.referralRecommended && !existing.referralRecommendedAt
+          ? { referralRecommendedAt: now, studentSelfReportReached: 'not_yet_answered' }
+          : {}),
       };
     } else {
-      // Create new
       signals.push({
-        id: crypto.randomUUID(),
+        id: `sig-${Date.now()}`,
         anonId: input.anonId,
         lastCheckinDate: input.lastCheckinDate,
         trendDirection: input.trendDirection,
         consentOptedIn: input.consentOptedIn,
         status: 'new',
         history: input.history,
-        isDemoData: false
+        isDemoData: false,
+        ...(input.referralRecommended
+          ? { referralRecommendedAt: now, studentSelfReportReached: 'not_yet_answered' }
+          : {}),
       });
     }
-    
-    // Sort so newest is first
-    signals.sort((a, b) => new Date(b.lastCheckinDate).getTime() - new Date(a.lastCheckinDate).getTime());
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(signals));
+  },
+
+  /**
+   * Patches ONLY studentSelfReportReached.  This is the student-facing write
+   * path and must never touch CounsellorSignal.status — that field belongs
+   * exclusively to updateSignalStatus().
+   */
+  async recordStudentSelfReport(
+    anonId: string,
+    value: 'yes' | 'no'
+  ): Promise<void> {
+    const signals = await this.listSignals();
+    const updated = signals.map((sig) =>
+      sig.anonId === anonId
+        ? { ...sig, studentSelfReportReached: value }
+        : sig
+    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   },
 
   async seedMockCounsellorData(): Promise<void> {
     if (localStorage.getItem(SEED_FLAG)) return;
 
-    const mockSignals: CounsellorSignal[] = [
+    const cases: CounsellorSignal[] = [
       {
-        id: crypto.randomUUID(),
+        id: 'case-a9x2b1',
         anonId: 'ML-A9X2B1',
-        lastCheckinDate: new Date().toISOString(),
+        contactDetail: '0782 441 903',
+        lastCheckinDate: daysAgo(0).toISOString(),
         trendDirection: 'worsening',
         consentOptedIn: true,
         status: 'new',
-        history: generateMockHistory('ML-A9X2B1', new Date()),
-        isDemoData: true
+        elevatedAreas: ['Sleep', 'Overwhelm', 'Energy'],
+        notes: '',
+        history: historyFor('ML-A9X2B1', daysAgo(0), ['mixed', 'hard', 'hard']),
+        isDemoData: true,
+        referralRecommendedAt: daysAgo(0).toISOString(),
+        studentSelfReportReached: 'not_yet_answered',
       },
       {
-        id: crypto.randomUUID(),
-        anonId: 'ML-Z4M8P9',
-        lastCheckinDate: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
+        id: 'case-k4n8c2',
+        anonId: 'ML-K4N8C2',
+        contactDetail: '0751 220 448',
+        lastCheckinDate: daysAgo(1).toISOString(),
+        trendDirection: 'worsening',
+        consentOptedIn: true,
+        status: 'new',
+        elevatedAreas: ['Focus', 'Self-regard'],
+        notes: '',
+        history: historyFor('ML-K4N8C2', daysAgo(1), ['ok', 'mixed', 'hard']),
+        isDemoData: true,
+        referralRecommendedAt: daysAgo(1).toISOString(),
+        studentSelfReportReached: 'no',
+      },
+      {
+        id: 'case-p2q7d5',
+        anonId: 'ML-P2Q7D5',
+        lastCheckinDate: daysAgo(1).toISOString(),
+        trendDirection: 'worsening',
+        consentOptedIn: false,
+        status: 'new',
+        elevatedAreas: ['Social withdrawal', 'Appetite'],
+        notes: '',
+        history: historyFor('ML-P2Q7D5', daysAgo(1), ['mixed', 'hard', 'hard']),
+        isDemoData: true,
+      },
+      {
+        id: 'case-r8t1e4',
+        anonId: 'ML-R8T1E4',
+        contactDetail: '0772 915 330',
+        lastCheckinDate: daysAgo(2).toISOString(),
+        trendDirection: 'worsening',
+        consentOptedIn: true,
+        status: 'reviewed',
+        elevatedAreas: ['Sleep', 'Energy'],
+        notes: 'Reviewed. Pattern is sustained. Outreach this week if they stay opted in.',
+        lastActionAt: daysAgo(1).toISOString(),
+        history: historyFor('ML-R8T1E4', daysAgo(2), ['hard', 'hard', 'hard']),
+        isDemoData: true,
+        // Demo data: referral recommended, student hasn't answered the self-report yet
+        referralRecommendedAt: daysAgo(2).toISOString(),
+        studentSelfReportReached: 'not_yet_answered',
+      },
+      {
+        id: 'case-h5j2g8',
+        anonId: 'ML-H5J2G8',
+        contactDetail: '0789 003 215',
+        lastCheckinDate: daysAgo(5).toISOString(),
+        trendDirection: 'worsening',
+        consentOptedIn: true,
+        status: 'contacted',
+        elevatedAreas: ['Social withdrawal', 'Self-regard'],
+        notes: 'Called on the unit line. Student agreed to a walk-in this week.',
+        lastActionAt: daysAgo(4).toISOString(),
+        history: historyFor('ML-H5J2G8', daysAgo(5), ['mixed', 'hard', 'hard']),
+        isDemoData: true,
+        // Demo data: counsellor marked contacted + student confirmed they were reached
+        referralRecommendedAt: daysAgo(6).toISOString(),
+        studentSelfReportReached: 'yes',
+      },
+      {
+        id: 'case-b3m6f9',
+        anonId: 'ML-B3M6F9',
+        lastCheckinDate: daysAgo(3).toISOString(),
         trendDirection: 'steady',
         consentOptedIn: false,
         status: 'reviewed',
-        history: generateMockHistory('ML-Z4M8P9', new Date(Date.now() - 86400000 * 2)),
-        isDemoData: true
+        elevatedAreas: ['Overwhelm'],
+        notes: 'Holding pattern. Recheck after the next check-in. No contact — they stayed anonymous.',
+        lastActionAt: daysAgo(2).toISOString(),
+        history: historyFor('ML-B3M6F9', daysAgo(3), ['mixed', 'mixed', 'mixed']),
+        isDemoData: true,
       },
       {
-        id: crypto.randomUUID(),
+        id: 'case-n4p8k2',
+        anonId: 'ML-N4P8K2',
+        lastCheckinDate: daysAgo(0).toISOString(),
+        trendDirection: 'improving',
+        consentOptedIn: false,
+        status: 'closed',
+        notes: 'Check-ins have stayed light. No flag.',
+        lastActionAt: daysAgo(0).toISOString(),
+        history: historyFor('ML-N4P8K2', daysAgo(0), ['ok', 'ok', 'ok']),
+        isDemoData: true,
+      },
+      {
+        id: 'case-c7v1w3',
+        anonId: 'ML-C7V1W3',
+        lastCheckinDate: daysAgo(2).toISOString(),
+        trendDirection: 'improving',
+        consentOptedIn: false,
+        status: 'closed',
+        notes: 'Doing well over three weeks.',
+        lastActionAt: daysAgo(2).toISOString(),
+        history: historyFor('ML-C7V1W3', daysAgo(2), ['mixed', 'ok', 'ok']),
+        isDemoData: true,
+      },
+      {
+        id: 'case-s5d9q8',
+        anonId: 'ML-S5D9Q8',
+        lastCheckinDate: daysAgo(4).toISOString(),
+        trendDirection: 'steady',
+        consentOptedIn: false,
+        status: 'closed',
+        notes: 'Steady and mostly okay. No outreach needed.',
+        lastActionAt: daysAgo(4).toISOString(),
+        history: historyFor('ML-S5D9Q8', daysAgo(4), ['ok', 'mixed', 'ok']),
+        isDemoData: true,
+      },
+      {
+        id: 'case-g2y6t0',
+        anonId: 'ML-G2Y6T0',
+        lastCheckinDate: daysAgo(6).toISOString(),
+        trendDirection: 'improving',
+        consentOptedIn: true,
+        contactDetail: '0704 118 672',
+        status: 'closed',
+        notes: 'Earlier concern eased. Latest weeks look okay. Closed from the queue.',
+        lastActionAt: daysAgo(5).toISOString(),
+        history: historyFor('ML-G2Y6T0', daysAgo(6), ['hard', 'ok', 'ok']),
+        isDemoData: true,
+      },
+      {
+        id: 'case-j7k3l2',
         anonId: 'ML-J7K3L2',
-        lastCheckinDate: new Date(Date.now() - 86400000 * 5).toISOString(),
+        contactDetail: '0758 664 091',
+        lastCheckinDate: daysAgo(6).toISOString(),
         trendDirection: 'improving',
         consentOptedIn: true,
         status: 'contacted',
-        history: generateMockHistory('ML-J7K3L2', new Date(Date.now() - 86400000 * 5)),
-        isDemoData: true
-      }
+        notes: 'Reached out after three harder weeks. Latest check-in is lighter. Follow up Friday.',
+        lastActionAt: daysAgo(5).toISOString(),
+        history: historyFor('ML-J7K3L2', daysAgo(6), ['hard', 'mixed', 'ok']),
+        isDemoData: true,
+        // Demo data: counsellor marked contacted, but student says they weren't reached (disagreement case)
+        referralRecommendedAt: daysAgo(7).toISOString(),
+        studentSelfReportReached: 'no',
+      },
+      {
+        id: 'case-d6s4v3',
+        anonId: 'ML-D6S4V3',
+        lastCheckinDate: daysAgo(10).toISOString(),
+        trendDirection: 'improving',
+        consentOptedIn: true,
+        contactDetail: '0776 219 504',
+        status: 'closed',
+        notes: 'Attended a walk-in. Closed after improving check-ins. Door remains open.',
+        lastActionAt: daysAgo(8).toISOString(),
+        history: historyFor('ML-D6S4V3', daysAgo(10), ['hard', 'mixed', 'ok']),
+        isDemoData: true,
+      },
     ];
 
-    const existing = await this.listSignals();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...mockSignals, ...existing]));
+    let existing: CounsellorSignal[] = [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        existing = (JSON.parse(raw) as CounsellorSignal[]).filter((s) => !s.isDemoData);
+      }
+    } catch {
+      existing = [];
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...cases, ...existing]));
     localStorage.setItem(SEED_FLAG, 'true');
-  }
+  },
 };
