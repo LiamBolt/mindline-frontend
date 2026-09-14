@@ -27,6 +27,7 @@ export default function CheckinFlow() {
   const [direction, setDirection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const [referralRecommended, setReferralRecommended] = useState(false);
   const submitLock = useRef(false);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const advancingRef = useRef(false);
@@ -65,10 +66,11 @@ export default function CheckinFlow() {
     setIsSubmitting(true);
     try {
       const latestAnswers = useCheckinDraftStore.getState().answers;
-      await checkinService.submitCheckin({
+      const result = await checkinService.submitCheckin({
         anonId: id,
         answers: latestAnswers,
       });
+      setReferralRecommended(result.referralRecommended);
       setIsDone(true);
       // Clear persisted draft so a refresh starts a new check-in, but keep isDone
       // so this session stays on the thank-you screen instead of looping questions.
@@ -130,7 +132,7 @@ export default function CheckinFlow() {
   };
 
   if (isDone) {
-    return <ConfirmationScreen />;
+    return <ConfirmationScreen referralRecommended={referralRecommended} />;
   }
 
   if (isPastLastQuestion) {

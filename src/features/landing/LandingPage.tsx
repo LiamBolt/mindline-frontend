@@ -1,6 +1,6 @@
-
 import { Link } from 'react-router-dom';
 import landingImage from '../../assets/landing-image.jpg';
+import { INSTITUTION } from '../../config/institutionConfig';
 
 export default function LandingPage() {
   return (
@@ -15,7 +15,7 @@ export default function LandingPage() {
       </h1>
 
       <p className="text-base md:text-lg text-fg-secondary mb-8 max-w-xl flex-shrink-0">
-        A short, anonymous check-in for MUST students. No account needed.
+        A short, anonymous check-in for {INSTITUTION.name} students. No account needed.
       </p>
 
       <Link

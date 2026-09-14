@@ -53,15 +53,22 @@ export const localDashboardAdapter: DashboardService = {
   async processSignal(input: ProcessSignalInput): Promise<void> {
     const signals = await this.listSignals();
     const existingIndex = signals.findIndex((s) => s.anonId === input.anonId);
+    // Set referralRecommendedAt when a flagged trend triggers this signal.
+    // Only set it if not already set — preserve the original timestamp.
+    const now = new Date().toISOString();
 
     if (existingIndex >= 0) {
+      const existing = signals[existingIndex];
       signals[existingIndex] = {
-        ...signals[existingIndex],
+        ...existing,
         lastCheckinDate: input.lastCheckinDate,
         trendDirection: input.trendDirection,
         consentOptedIn: input.consentOptedIn,
         history: input.history,
-        status: input.trendDirection === 'worsening' ? 'new' : signals[existingIndex].status,
+        status: input.trendDirection === 'worsening' ? 'new' : existing.status,
+        ...(input.referralRecommended && !existing.referralRecommendedAt
+          ? { referralRecommendedAt: now, studentSelfReportReached: 'not_yet_answered' }
+          : {}),
       };
     } else {
       signals.push({
@@ -73,11 +80,32 @@ export const localDashboardAdapter: DashboardService = {
         status: 'new',
         history: input.history,
         isDemoData: false,
+        ...(input.referralRecommended
+          ? { referralRecommendedAt: now, studentSelfReportReached: 'not_yet_answered' }
+          : {}),
       });
     }
 
     signals.sort((a, b) => new Date(b.lastCheckinDate).getTime() - new Date(a.lastCheckinDate).getTime());
     localStorage.setItem(STORAGE_KEY, JSON.stringify(signals));
+  },
+
+  /**
+   * Patches ONLY studentSelfReportReached.  This is the student-facing write
+   * path and must never touch CounsellorSignal.status — that field belongs
+   * exclusively to updateSignalStatus().
+   */
+  async recordStudentSelfReport(
+    anonId: string,
+    value: 'yes' | 'no'
+  ): Promise<void> {
+    const signals = await this.listSignals();
+    const updated = signals.map((sig) =>
+      sig.anonId === anonId
+        ? { ...sig, studentSelfReportReached: value }
+        : sig
+    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   },
 
   async seedMockCounsellorData(): Promise<void> {
@@ -135,6 +163,9 @@ export const localDashboardAdapter: DashboardService = {
         lastActionAt: daysAgo(1).toISOString(),
         history: historyFor('ML-R8T1E4', daysAgo(2), ['hard', 'hard', 'hard']),
         isDemoData: true,
+        // Demo data: referral recommended, student hasn't answered the self-report yet
+        referralRecommendedAt: daysAgo(2).toISOString(),
+        studentSelfReportReached: 'not_yet_answered',
       },
       {
         id: 'case-h5j2g8',
@@ -149,6 +180,9 @@ export const localDashboardAdapter: DashboardService = {
         lastActionAt: daysAgo(4).toISOString(),
         history: historyFor('ML-H5J2G8', daysAgo(5), ['mixed', 'hard', 'hard']),
         isDemoData: true,
+        // Demo data: counsellor marked contacted + student confirmed they were reached
+        referralRecommendedAt: daysAgo(6).toISOString(),
+        studentSelfReportReached: 'yes',
       },
       {
         id: 'case-b3m6f9',
@@ -224,6 +258,9 @@ export const localDashboardAdapter: DashboardService = {
         lastActionAt: daysAgo(5).toISOString(),
         history: historyFor('ML-J7K3L2', daysAgo(6), ['hard', 'mixed', 'ok']),
         isDemoData: true,
+        // Demo data: counsellor marked contacted, but student says they weren't reached (disagreement case)
+        referralRecommendedAt: daysAgo(7).toISOString(),
+        studentSelfReportReached: 'no',
       },
       {
         id: 'case-d6s4v3',

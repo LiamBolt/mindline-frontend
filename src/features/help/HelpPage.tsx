@@ -1,5 +1,5 @@
-
 import { EMERGENCY_CONTACTS } from '../../config/emergencyContacts';
+import { INSTITUTION } from '../../config/institutionConfig';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 
 export default function HelpPage() {
@@ -8,7 +8,7 @@ export default function HelpPage() {
       <div className="bg-help-50 dark:bg-[#4a2710] p-6 rounded-3xl border border-help-500/20">
         <h1 className="text-2xl font-semibold text-help-600 dark:text-help-500 mb-2">I need help now</h1>
         <p className="text-fg-secondary mb-8">
-          If you are in immediate distress or need to speak with someone right away, please use the contacts below. These are direct lines to support at MUST.
+          If you are in immediate distress or need to speak with someone right away, please use the contacts below. These are direct lines to support at {INSTITUTION.name}.
         </p>
 
         <div className="space-y-4">

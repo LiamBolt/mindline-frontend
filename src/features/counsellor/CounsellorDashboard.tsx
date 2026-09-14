@@ -4,6 +4,7 @@ import { dashboardService } from '../../services/dashboardService';
 import type { CounsellorSignal } from '../../services/types';
 import { useCounsellorAuthStore } from '../../stores/counsellorAuthStore';
 import { COUNSELLOR_STAFF } from '../../config/counsellorAccess';
+import { INSTITUTION } from '../../config/institutionConfig';
 import { cn } from '../../utils/cn';
 import BrandLogo from '../../components/layout/BrandLogo';
 
@@ -22,6 +23,7 @@ import TrendingFlatRoundedIcon from '@mui/icons-material/TrendingFlatRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 
 type View = 'queue' | 'outreach' | 'well' | 'all' | 'closed' | 'protocol';
+type ReachFilter = 'all' | 'confirmed' | 'not_reached' | 'awaiting';
 
 const NAV: { id: View; label: string; icon: typeof InboxRoundedIcon }[] = [
   { id: 'queue', label: 'Needs attention', icon: AssignmentRoundedIcon },
@@ -42,6 +44,7 @@ export default function CounsellorDashboard() {
   const [error, setError] = useState('');
   const [signals, setSignals] = useState<CounsellorSignal[]>([]);
   const [view, setView] = useState<View>('queue');
+  const [reachFilter, setReachFilter] = useState<ReachFilter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -65,12 +68,26 @@ export default function CounsellorDashboard() {
   };
 
   const visible = useMemo(() => {
-    if (view === 'queue') return signals.filter((s) => s.status === 'new' && s.trendDirection === 'worsening');
-    if (view === 'outreach') return signals.filter((s) => s.consentOptedIn && s.status !== 'closed' && s.trendDirection === 'worsening');
-    if (view === 'well') return signals.filter(isDoingWell);
-    if (view === 'closed') return signals.filter((s) => s.status === 'closed');
-    return signals;
-  }, [signals, view]);
+    let base: CounsellorSignal[];
+    if (view === 'queue') base = signals.filter((s) => s.status === 'new' && s.trendDirection === 'worsening');
+    else if (view === 'outreach') base = signals.filter((s) => s.consentOptedIn && s.status !== 'closed' && s.trendDirection === 'worsening');
+    else if (view === 'well') base = signals.filter(isDoingWell);
+    else if (view === 'closed') base = signals.filter((s) => s.status === 'closed');
+    else base = signals;
+
+    // Apply the independent reach-state filter on top of the view filter.
+    if (reachFilter === 'confirmed')
+      return base.filter((s) => s.status === 'contacted' && s.studentSelfReportReached === 'yes');
+    if (reachFilter === 'not_reached')
+      return base.filter((s) => s.studentSelfReportReached === 'no');
+    if (reachFilter === 'awaiting')
+      return base.filter(
+        (s) =>
+          s.referralRecommendedAt &&
+          (!s.studentSelfReportReached || s.studentSelfReportReached === 'not_yet_answered')
+      );
+    return base;
+  }, [signals, view, reachFilter]);
 
   useEffect(() => {
     if (view === 'protocol') return;
@@ -109,7 +126,7 @@ export default function CounsellorDashboard() {
           </div>
           <h1 className="text-2xl font-semibold text-center text-fg-heading">Counselling Unit</h1>
           <p className="text-sm text-fg-secondary text-center mt-2 mb-8">
-            Staff sign-in for MUST counsellors. Students never use this screen. Cases stay anonymous.
+            Staff sign-in for {INSTITUTION.name} counsellors. Students never use this screen. Cases stay anonymous.
           </p>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -252,6 +269,21 @@ export default function CounsellorDashboard() {
             </h1>
             <p className="text-xs text-fg-secondary truncate">Anonymous IDs only. You decide the next step — the app does not.</p>
           </div>
+          {/* Reach-state filter — independent of the view/status filter above */}
+          {view !== 'protocol' && (
+            <select
+              id="reach-filter"
+              value={reachFilter}
+              onChange={(e) => setReachFilter(e.target.value as ReachFilter)}
+              className="ml-auto text-xs rounded-xl border border-border-subtle bg-bg-primary px-3 py-1.5 text-fg-primary focus:outline-none focus:ring-2 focus:ring-border-focus"
+              aria-label="Filter by reach state"
+            >
+              <option value="all">All reach states</option>
+              <option value="confirmed">Confirmed reached</option>
+              <option value="not_reached">Student reports not reached</option>
+              <option value="awaiting">Awaiting confirmation</option>
+            </select>
+          )}
         </header>
 
         {view === 'protocol' ? (
@@ -277,7 +309,12 @@ export default function CounsellorDashboard() {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <p className="font-semibold font-mono tracking-wide">{signal.anonId}</p>
-                          {isDoingWell(signal) ? <WellBadge /> : <StatusBadge status={signal.status} />}
+                          <div className="flex flex-col items-end gap-1">
+                            {isDoingWell(signal) ? <WellBadge /> : <StatusBadge status={signal.status} />}
+                            {signal.referralRecommendedAt && (
+                              <ReachBadge signal={signal} />
+                            )}
+                          </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-fg-secondary">
                           <TrendChip direction={signal.trendDirection} />
@@ -344,6 +381,48 @@ function StatusBadge({ status }: { status: CounsellorSignal['status'] }) {
   );
 }
 
+/**
+ * ReachBadge — surfaces the three reach states from Stage 4.
+ * Styling is intentionally neutral: this is a visibility signal for the
+ * counselling team, not an alarm or error indicator.
+ */
+function ReachBadge({ signal }: { signal: CounsellorSignal }) {
+  const { status, studentSelfReportReached, referralRecommendedAt } = signal;
+
+  // Confirmed reached: counsellor recorded contact AND student confirmed it
+  if (status === 'contacted' && studentSelfReportReached === 'yes') {
+    return (
+      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-mint-100 text-mint-800 dark:bg-mint-900/40 dark:text-mint-200">
+        Confirmed reached
+      </span>
+    );
+  }
+
+  // Student reports not reached (could disagree with counsellor's 'contacted')
+  if (studentSelfReportReached === 'no') {
+    return (
+      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300">
+        Student reports not reached
+      </span>
+    );
+  }
+
+  // Referral was recommended but student hasn't answered the self-report yet
+  if (
+    referralRecommendedAt &&
+    (!studentSelfReportReached || studentSelfReportReached === 'not_yet_answered')
+  ) {
+    return (
+      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+        Awaiting confirmation
+      </span>
+    );
+  }
+
+  return null;
+}
+
+
 function CaseDetail({
   signal,
   noteDraft,
@@ -382,7 +461,7 @@ function CaseDetail({
             <p className="text-sm font-medium">This ID asked to be reachable</p>
             <p className="text-lg font-semibold mt-1 font-mono">{signal.contactDetail}</p>
             <a href={`tel:${signal.contactDetail?.replace(/\s/g, '')}`} className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-mint-700 dark:text-mint-300">
-              <PhoneInTalkRoundedIcon fontSize="small" /> Call on a MUST-approved line
+              <PhoneInTalkRoundedIcon fontSize="small" /> Call on an {INSTITUTION.name}-approved line
             </a>
           </>
         ) : (
@@ -447,7 +526,7 @@ function ProtocolPanel() {
   return (
     <div className="max-w-3xl p-6 space-y-4">
       <p className="text-fg-secondary">
-        MindLine is a referral bridge into MUST counselling — not a diagnosis tool. Every row is an anonymous ID. The counsellor, not the app, decides what happens next.
+        MindLine is a referral bridge into {INSTITUTION.name} counselling — not a diagnosis tool. Every row is an anonymous ID. The counsellor, not the app, decides what happens next.
       </p>
       <section className="bg-white dark:bg-bg-secondary rounded-2xl border border-border-subtle p-5">
         <h2 className="font-semibold mb-2">1. Review a new signal</h2>
@@ -455,7 +534,7 @@ function ProtocolPanel() {
       </section>
       <section className="bg-white dark:bg-bg-secondary rounded-2xl border border-border-subtle p-5">
         <h2 className="font-semibold mb-2">2. Respect consent</h2>
-        <p className="text-sm text-fg-secondary">If they opted in, you may contact them using a MUST-approved method (unit phone line). If they stayed anonymous, you still see the pattern — you cannot identify them from this screen.</p>
+        <p className="text-sm text-fg-secondary">If they opted in, you may contact them using an {INSTITUTION.name}-approved method (unit phone line). If they stayed anonymous, you still see the pattern — you cannot identify them from this screen.</p>
       </section>
       <section className="bg-white dark:bg-bg-secondary rounded-2xl border border-border-subtle p-5">
         <h2 className="font-semibold mb-2">3. Decide the next step</h2>

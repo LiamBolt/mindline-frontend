@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useConsentStore } from '../../stores/consentStore';
 import { useIdentityStore } from '../../stores/identityStore';
+import { INSTITUTION } from '../../config/institutionConfig';
 import FingerprintRoundedIcon from '@mui/icons-material/FingerprintRounded';
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded';
 import { cn } from '../../utils/cn';
@@ -64,7 +65,7 @@ export default function PrivacyPage() {
         </div>
         
         <p className="text-sm text-fg-secondary mb-6">
-          If our system notices things have been consistently difficult for you, the MUST Counselling Unit can reach out—but only if you allow it. You can change this setting at any time.
+          If our system notices things have been consistently difficult for you, the {INSTITUTION.counsellingUnitLabel} can reach out—but only if you allow it. You can change this setting at any time.
         </p>
 
         <label className="flex items-center justify-between p-4 bg-bg-primary rounded-xl border border-border-subtle cursor-pointer focus-within:ring-2 focus-within:ring-border-focus focus-within:ring-offset-2 focus-within:ring-offset-bg-secondary">
