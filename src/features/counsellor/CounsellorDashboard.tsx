@@ -444,8 +444,9 @@ function CaseDetail({
       </h2>
       <p className="text-sm text-fg-secondary mt-1">Anonymous check-in ID. No name or faculty is stored here.</p>
 
-      <div className="flex flex-wrap gap-2 mt-4">
+      <div className="flex flex-wrap items-center gap-2 mt-4">
         {well ? <WellBadge /> : <StatusBadge status={signal.status} />}
+        {signal.referralRecommendedAt && <ReachBadge signal={signal} />}
         <span className="text-sm"><TrendChip direction={signal.trendDirection} /></span>
       </div>
 

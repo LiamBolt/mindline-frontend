@@ -2,7 +2,7 @@ import type { CheckinRecord, CounsellorSignal } from '../../types';
 import type { DashboardService, ProcessSignalInput } from '../../dashboardService';
 
 const STORAGE_KEY = 'mindline_dashboard_signals';
-const SEED_FLAG = 'mindline_dashboard_seeded_v4';
+const SEED_FLAG = 'mindline_dashboard_seeded_v5';
 
 const daysAgo = (days: number) => {
   const d = new Date();
@@ -23,9 +23,9 @@ const answers = (level: 'ok' | 'mixed' | 'hard'): Record<string, number> => {
 const historyFor = (anonId: string, base: Date, pattern: Array<'ok' | 'mixed' | 'hard'>): CheckinRecord[] =>
   pattern.map((level, i) => {
     const d = new Date(base);
-    d.setDate(d.getDate() - (pattern.length - 1 - i) * 7);
+    d.setDate(d.getDate() - i * 7);
     return {
-      id: `${anonId}-${i}`,
+      id: `seed-${anonId}-${i}`,
       anonId,
       timestamp: d.toISOString(),
       answers: answers(level),
@@ -34,19 +34,20 @@ const historyFor = (anonId: string, base: Date, pattern: Array<'ok' | 'mixed' | 
 
 export const localDashboardAdapter: DashboardService = {
   async listSignals(): Promise<CounsellorSignal[]> {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    await this.seedMockCounsellorData();
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
   },
 
-  async updateSignalStatus(id, status) {
-    await this.updateSignal(id, { status, lastActionAt: new Date().toISOString() });
-  },
-
-  async updateSignal(id, patch) {
+  async updateSignalStatus(id: string, status: CounsellorSignal['status']): Promise<void> {
     const signals = await this.listSignals();
-    const updated = signals.map((sig) =>
-      sig.id === id ? { ...sig, ...patch, lastActionAt: patch.lastActionAt ?? new Date().toISOString() } : sig
-    );
+    const updated = signals.map((s) => (s.id === id ? { ...s, status, lastActionAt: new Date().toISOString() } : s));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  },
+
+  async updateSignal(id: string, patch: Partial<CounsellorSignal>): Promise<void> {
+    const signals = await this.listSignals();
+    const updated = signals.map((s) => (s.id === id ? { ...s, ...patch, lastActionAt: new Date().toISOString() } : s));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   },
 
@@ -72,7 +73,7 @@ export const localDashboardAdapter: DashboardService = {
       };
     } else {
       signals.push({
-        id: crypto.randomUUID(),
+        id: `sig-${Date.now()}`,
         anonId: input.anonId,
         lastCheckinDate: input.lastCheckinDate,
         trendDirection: input.trendDirection,
@@ -86,7 +87,6 @@ export const localDashboardAdapter: DashboardService = {
       });
     }
 
-    signals.sort((a, b) => new Date(b.lastCheckinDate).getTime() - new Date(a.lastCheckinDate).getTime());
     localStorage.setItem(STORAGE_KEY, JSON.stringify(signals));
   },
 
@@ -124,6 +124,8 @@ export const localDashboardAdapter: DashboardService = {
         notes: '',
         history: historyFor('ML-A9X2B1', daysAgo(0), ['mixed', 'hard', 'hard']),
         isDemoData: true,
+        referralRecommendedAt: daysAgo(0).toISOString(),
+        studentSelfReportReached: 'not_yet_answered',
       },
       {
         id: 'case-k4n8c2',
@@ -137,6 +139,8 @@ export const localDashboardAdapter: DashboardService = {
         notes: '',
         history: historyFor('ML-K4N8C2', daysAgo(1), ['ok', 'mixed', 'hard']),
         isDemoData: true,
+        referralRecommendedAt: daysAgo(1).toISOString(),
+        studentSelfReportReached: 'no',
       },
       {
         id: 'case-p2q7d5',
@@ -277,7 +281,15 @@ export const localDashboardAdapter: DashboardService = {
       },
     ];
 
-    const existing = (await this.listSignals()).filter((s) => !s.isDemoData);
+    let existing: CounsellorSignal[] = [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        existing = (JSON.parse(raw) as CounsellorSignal[]).filter((s) => !s.isDemoData);
+      }
+    } catch {
+      existing = [];
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...cases, ...existing]));
     localStorage.setItem(SEED_FLAG, 'true');
   },

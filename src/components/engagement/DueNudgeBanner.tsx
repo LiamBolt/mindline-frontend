@@ -79,6 +79,17 @@ export default function DueNudgeBanner() {
 
   useEffect(() => {
     void load();
+    const handleUpdate = () => void load();
+    window.addEventListener('mindline_nudge_update', handleUpdate);
+    const interval = setInterval(() => {
+      if (localStorage.getItem('mindline_demo_fast_timing') === 'true') {
+        void load();
+      }
+    }, 2000);
+    return () => {
+      window.removeEventListener('mindline_nudge_update', handleUpdate);
+      clearInterval(interval);
+    };
   }, [load]);
 
   const handleDismiss = () => setState({ kind: 'dismissed' });

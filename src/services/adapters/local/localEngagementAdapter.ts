@@ -35,9 +35,12 @@ export const localEngagementAdapter: EngagementService = {
     );
     if (alreadyScheduled) return;
 
-    const scheduledFor = new Date(
-      Date.now() + ENGAGEMENT_CONFIG.extremeNudgeDelayHours * 60 * 60 * 1000
-    ).toISOString();
+    const isFastDemo = localStorage.getItem('mindline_demo_fast_timing') === 'true';
+    const delayMs = isFastDemo
+      ? 5 * 1000 // 5 seconds in fast demo mode for live testing/pitch
+      : ENGAGEMENT_CONFIG.extremeNudgeDelayHours * 60 * 60 * 1000;
+
+    const scheduledFor = new Date(Date.now() + delayMs).toISOString();
 
     nudges.push({
       id: crypto.randomUUID(),
@@ -65,9 +68,13 @@ export const localEngagementAdapter: EngagementService = {
       (n) => !(n.anonId === anonId && n.type === 'periodic_reminder' && !n.respondedAt)
     );
 
+    const isFastDemo = localStorage.getItem('mindline_demo_fast_timing') === 'true';
+    const delayMs = isFastDemo
+      ? 10 * 1000 // 10 seconds in fast demo mode
+      : ENGAGEMENT_CONFIG.reminderCadenceDays * 24 * 60 * 60 * 1000;
+
     const scheduledFor = new Date(
-      new Date(lastCheckinTimestamp).getTime() +
-        ENGAGEMENT_CONFIG.reminderCadenceDays * 24 * 60 * 60 * 1000
+      new Date(lastCheckinTimestamp).getTime() + delayMs
     ).toISOString();
 
     filtered.push({
