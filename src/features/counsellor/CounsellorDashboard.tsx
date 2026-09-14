@@ -22,12 +22,20 @@ import TrendingDownRoundedIcon from '@mui/icons-material/TrendingDownRounded';
 import TrendingFlatRoundedIcon from '@mui/icons-material/TrendingFlatRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 
+import CustomSelect from '../../components/common/CustomSelect';
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import FullscreenRoundedIcon from '@mui/icons-material/FullscreenRounded';
+import FullscreenExitRoundedIcon from '@mui/icons-material/FullscreenExitRounded';
+import ViewSidebarRoundedIcon from '@mui/icons-material/ViewSidebarRounded';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+
 type View = 'queue' | 'outreach' | 'well' | 'all' | 'closed' | 'protocol';
 type ReachFilter = 'all' | 'confirmed' | 'not_reached' | 'awaiting';
 
 const NAV: { id: View; label: string; icon: typeof InboxRoundedIcon }[] = [
   { id: 'queue', label: 'Needs attention', icon: AssignmentRoundedIcon },
-  { id: 'outreach', label: 'Ready to contact', icon: PhoneInTalkRoundedIcon },
+  { id: 'outreach', label: 'Ready to contact (Active outreach)', icon: PhoneInTalkRoundedIcon },
   { id: 'well', label: 'Doing well', icon: SentimentSatisfiedAltRoundedIcon },
   { id: 'all', label: 'All check-ins', icon: InboxRoundedIcon },
   { id: 'closed', label: 'Closed', icon: TaskAltRoundedIcon },
@@ -48,6 +56,8 @@ export default function CounsellorDashboard() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [detailMode, setDetailMode] = useState<'normal' | 'collapsed' | 'expanded'>('normal');
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -197,7 +207,8 @@ export default function CounsellorDashboard() {
 
       <aside
         className={cn(
-          'fixed lg:static inset-y-0 left-0 z-40 w-72 shrink-0 bg-white dark:bg-bg-secondary border-r border-border-subtle flex flex-col transition-transform duration-base h-full',
+          'fixed inset-y-0 left-0 z-40 w-64 border-r border-border-subtle bg-white dark:bg-bg-secondary flex flex-col transition-all duration-300 shrink-0',
+          sidebarCollapsed ? 'lg:hidden' : 'lg:static lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
@@ -259,39 +270,132 @@ export default function CounsellorDashboard() {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-        <header className="h-16 shrink-0 flex items-center gap-3 px-4 border-b border-border-subtle bg-ice-50/90 dark:bg-[#0b1630] backdrop-blur-sm">
-          <button type="button" className="lg:hidden p-2 rounded-full focus-ring" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
-            <MenuRoundedIcon />
-          </button>
-          <div className="min-w-0">
-            <h1 className="text-lg font-semibold text-fg-heading truncate">
-              {NAV.find((n) => n.id === view)?.label}
-            </h1>
-            <p className="text-xs text-fg-secondary truncate">Anonymous IDs only. You decide the next step — the app does not.</p>
-          </div>
-          {/* Reach-state filter — independent of the view/status filter above */}
-          {view !== 'protocol' && (
-            <select
-              id="reach-filter"
-              value={reachFilter}
-              onChange={(e) => setReachFilter(e.target.value as ReachFilter)}
-              className="ml-auto text-xs rounded-xl border border-border-subtle bg-bg-primary px-3 py-1.5 text-fg-primary focus:outline-none focus:ring-2 focus:ring-border-focus"
-              aria-label="Filter by reach state"
+        <header className="h-16 shrink-0 flex items-center justify-between gap-3 px-4 border-b border-border-subtle bg-ice-50/90 dark:bg-[#0b1630] backdrop-blur-sm">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {/* Mobile menu toggle */}
+            <button
+              type="button"
+              className="lg:hidden p-2 rounded-xl text-fg-secondary hover:bg-bg-primary hover:text-fg-primary focus-ring"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
             >
-              <option value="all">All reach states</option>
-              <option value="confirmed">Confirmed reached</option>
-              <option value="not_reached">Student reports not reached</option>
-              <option value="awaiting">Awaiting confirmation</option>
-            </select>
-          )}
+              <MenuRoundedIcon />
+            </button>
+
+            {/* Desktop sidebar collapse/expand toggle */}
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed((prev) => !prev)}
+              title={sidebarCollapsed ? 'Show navigation sidebar' : 'Collapse navigation sidebar'}
+              className="hidden lg:flex items-center justify-center p-2 rounded-xl text-fg-secondary hover:bg-bg-primary hover:text-fg-primary focus-ring border border-border-subtle"
+            >
+              <ViewSidebarRoundedIcon fontSize="small" />
+            </button>
+
+            <div className="min-w-0">
+              <h1 className="text-base font-semibold text-fg-heading truncate">
+                {NAV.find((n) => n.id === view)?.label}
+              </h1>
+              <p className="text-xs text-fg-secondary truncate">
+                Anonymous IDs only. You decide the next step — the app does not.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {/* If detail panel is collapsed, provide quick restore button */}
+            {view !== 'protocol' && detailMode === 'collapsed' && selected && (
+              <button
+                type="button"
+                onClick={() => setDetailMode('normal')}
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border-subtle bg-bg-primary text-xs font-medium text-fg-secondary hover:text-fg-primary hover:border-mint-400 focus-ring shadow-sm"
+              >
+                <ChevronLeftRoundedIcon fontSize="small" />
+                <span>Case {selected.anonId}</span>
+              </button>
+            )}
+
+            {/* Custom Reach-state filter */}
+            {view !== 'protocol' && (
+              <CustomSelect
+                value={reachFilter}
+                onChange={(val) => setReachFilter(val as ReachFilter)}
+                ariaLabel="Filter cases by outreach and confirmation status"
+                options={[
+                  {
+                    value: 'all',
+                    label: 'All outreach statuses',
+                    description: 'Show all case confirmation states',
+                  },
+                  {
+                    value: 'confirmed',
+                    label: 'Student confirmed reached',
+                    description: 'Contact logged & student confirmed',
+                  },
+                  {
+                    value: 'not_reached',
+                    label: 'Student reports not reached',
+                    description: 'Counsellor logged contact, student says no contact',
+                  },
+                  {
+                    value: 'awaiting',
+                    label: 'Awaiting student confirmation',
+                    description: 'Referral recommended, response pending',
+                  },
+                ]}
+              />
+            )}
+          </div>
         </header>
 
         {view === 'protocol' ? (
           <div className="flex-1 min-h-0 overflow-y-auto">
             <ProtocolPanel />
           </div>
+        ) : detailMode === 'expanded' && selected ? (
+          /* Full-width Case Detail View */
+          <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-bg-secondary p-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-border-subtle">
+                <button
+                  type="button"
+                  onClick={() => setDetailMode('normal')}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border-subtle text-xs font-medium text-fg-secondary hover:text-fg-primary hover:bg-bg-primary focus-ring"
+                >
+                  <ArrowBackRoundedIcon fontSize="small" />
+                  Back to dual panel view
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDetailMode('normal')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border-subtle text-xs font-medium text-fg-secondary hover:text-fg-primary focus-ring"
+                >
+                  <FullscreenExitRoundedIcon fontSize="small" />
+                  Exit full screen
+                </button>
+              </div>
+              <CaseDetail
+                signal={selected}
+                noteDraft={noteDraft}
+                setNoteDraft={setNoteDraft}
+                onSaveNote={saveNote}
+                onStatus={applyStatus}
+                detailMode={detailMode}
+                onToggleExpand={() => setDetailMode('normal')}
+                onCollapse={() => setDetailMode('collapsed')}
+              />
+            </div>
+          </div>
         ) : (
-          <div className="flex-1 min-h-0 grid lg:grid-cols-[minmax(0,1fr)_360px] overflow-hidden">
+          /* Dual or Collapsed Grid Layout */
+          <div
+            className={cn(
+              'flex-1 min-h-0 grid overflow-hidden transition-all duration-300',
+              detailMode === 'collapsed'
+                ? 'grid-cols-1'
+                : 'lg:grid-cols-[minmax(0,1fr)_400px] grid-cols-1'
+            )}
+          >
             <div className="min-h-0 overflow-y-auto p-4">
               {visible.length === 0 ? (
                 <p className="text-fg-secondary p-8 text-center">Nothing in this list right now.</p>
@@ -301,10 +405,15 @@ export default function CounsellorDashboard() {
                     <li key={signal.id}>
                       <button
                         type="button"
-                        onClick={() => setSelectedId(signal.id)}
+                        onClick={() => {
+                          setSelectedId(signal.id);
+                          if (detailMode === 'collapsed') setDetailMode('normal');
+                        }}
                         className={cn(
                           'w-full text-left p-3.5 rounded-2xl border transition-colors focus-ring bg-white dark:bg-bg-secondary',
-                          selected?.id === signal.id ? 'border-mint-500 shadow-sm' : 'border-border-subtle hover:border-mint-300'
+                          selected?.id === signal.id
+                            ? 'border-mint-500 shadow-sm'
+                            : 'border-border-subtle hover:border-mint-300'
                         )}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -328,19 +437,27 @@ export default function CounsellorDashboard() {
               )}
             </div>
 
-            <section className="min-h-0 overflow-y-auto border-t lg:border-t-0 lg:border-l border-border-subtle bg-white dark:bg-bg-secondary p-5">
-              {!selected ? (
-                <p className="text-fg-secondary">Select an ID to work it.</p>
-              ) : (
-                <CaseDetail
-                  signal={selected}
-                  noteDraft={noteDraft}
-                  setNoteDraft={setNoteDraft}
-                  onSaveNote={saveNote}
-                  onStatus={applyStatus}
-                />
-              )}
-            </section>
+            {/* Right Case Detail Inspector */}
+            {detailMode !== 'collapsed' && (
+              <section className="min-h-0 overflow-y-auto border-t lg:border-t-0 lg:border-l border-border-subtle bg-white dark:bg-bg-secondary p-5">
+                {!selected ? (
+                  <p className="text-fg-secondary">Select an ID to work it.</p>
+                ) : (
+                  <CaseDetail
+                    signal={selected}
+                    noteDraft={noteDraft}
+                    setNoteDraft={setNoteDraft}
+                    onSaveNote={saveNote}
+                    onStatus={applyStatus}
+                    detailMode={detailMode}
+                    onToggleExpand={() =>
+                      setDetailMode(detailMode === 'expanded' ? 'normal' : 'expanded')
+                    }
+                    onCollapse={() => setDetailMode('collapsed')}
+                  />
+                )}
+              </section>
+            )}
           </div>
         )}
       </div>
@@ -429,16 +546,55 @@ function CaseDetail({
   setNoteDraft,
   onSaveNote,
   onStatus,
+  detailMode = 'normal',
+  onToggleExpand,
+  onCollapse,
 }: {
   signal: CounsellorSignal;
   noteDraft: string;
   setNoteDraft: (v: string) => void;
   onSaveNote: () => void;
   onStatus: (status: CounsellorSignal['status']) => void;
+  detailMode?: 'normal' | 'collapsed' | 'expanded';
+  onToggleExpand?: () => void;
+  onCollapse?: () => void;
 }) {
   const well = isDoingWell(signal);
   return (
     <div>
+      {/* Panel header controls */}
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-border-subtle">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-fg-secondary">
+          Case Inspector
+        </span>
+        <div className="flex items-center gap-1">
+          {onToggleExpand && (
+            <button
+              type="button"
+              onClick={onToggleExpand}
+              title={detailMode === 'expanded' ? 'Restore view' : 'Expand full screen'}
+              className="p-1 rounded-lg text-fg-secondary hover:bg-bg-primary hover:text-fg-primary focus-ring"
+            >
+              {detailMode === 'expanded' ? (
+                <FullscreenExitRoundedIcon fontSize="small" />
+              ) : (
+                <FullscreenRoundedIcon fontSize="small" />
+              )}
+            </button>
+          )}
+          {onCollapse && (
+            <button
+              type="button"
+              onClick={onCollapse}
+              title="Collapse detail panel"
+              className="p-1 rounded-lg text-fg-secondary hover:bg-bg-primary hover:text-fg-primary focus-ring"
+            >
+              <ChevronRightRoundedIcon fontSize="small" />
+            </button>
+          )}
+        </div>
+      </div>
+
       <h2 className="text-xl font-semibold font-mono text-fg-heading tracking-wide">
         {signal.anonId}
       </h2>

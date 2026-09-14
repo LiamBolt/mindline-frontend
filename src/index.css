@@ -118,6 +118,37 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;
   }
+
+  /* Universal Sleek Custom Scrollbars (Eliminating blocky OS scrollbars) */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(61, 107, 255, 0.25) transparent;
+  }
+  .dark * {
+    scrollbar-color: rgba(46, 207, 255, 0.25) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(61, 107, 255, 0.22);
+    border-radius: 9999px;
+    transition: background 0.2s ease;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(61, 107, 255, 0.45);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(46, 207, 255, 0.22);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(46, 207, 255, 0.45);
+  }
 }
 
 @layer components {

@@ -1,20 +1,27 @@
 import { useState } from 'react';
 import { useA11yStore } from '../../stores/a11yStore';
 import { useIdentityStore } from '../../stores/identityStore';
+import { useInstitutionStore } from '../../stores/institutionStore';
 import { dashboardService } from '../../services/dashboardService';
 import type { ScheduledNudge, CounsellorSignal } from '../../services/types';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import SettingsBrightnessRoundedIcon from '@mui/icons-material/SettingsBrightnessRounded';
-import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import ScienceRoundedIcon from '@mui/icons-material/ScienceRounded';
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
+import CustomToggle from '../../components/common/CustomToggle';
+import UniversitySelectModal from '../../components/institution/UniversitySelectModal';
 import { cn } from '../../utils/cn';
 
 export default function SettingsPage() {
   const { theme, setTheme, highContrast, setHighContrast, reduceMotion, setReduceMotion } = useA11yStore();
   const { anonId } = useIdentityStore();
+  const { getCurrentInstitution } = useInstitutionStore();
+  const currentInstitution = getCurrentInstitution();
+
+  const [univModalOpen, setUnivModalOpen] = useState(false);
   const [fastTiming, setFastTiming] = useState(
     () => localStorage.getItem('mindline_demo_fast_timing') === 'true'
   );
@@ -116,8 +123,36 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col p-4 max-w-xl mx-auto w-full pt-12">
+    <div className="flex-1 flex flex-col p-4 max-w-xl mx-auto w-full pt-12 pb-16">
       <h1 className="text-2xl font-semibold mb-8">Settings</h1>
+
+      {/* University Campus Section */}
+      <section className="mb-8 p-5 bg-bg-secondary rounded-3xl border border-border-subtle shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-medium text-teal-800 dark:text-teal-100 flex items-center gap-2">
+            <SchoolRoundedIcon fontSize="small" /> University Campus
+          </h2>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-mint-100 text-mint-800 dark:bg-mint-900/40 dark:text-mint-200">
+            {currentInstitution.name}
+          </span>
+        </div>
+        <p className="text-xs text-fg-secondary mb-4">
+          Determines counselling units, emergency lines, and branding across student and counsellor views.
+        </p>
+        <div className="flex items-center justify-between p-3.5 bg-bg-primary rounded-2xl border border-border-subtle gap-3">
+          <div className="min-w-0">
+            <h3 className="font-semibold text-sm text-fg-heading truncate">{currentInstitution.fullName}</h3>
+            <p className="text-xs text-fg-secondary truncate mt-0.5">{currentInstitution.counsellingUnitLabel}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setUnivModalOpen(true)}
+            className="shrink-0 px-3.5 py-2 rounded-xl text-xs font-medium border border-border-subtle bg-bg-secondary hover:border-mint-400 text-fg-primary focus-ring shadow-xs"
+          >
+            Change Campus
+          </button>
+        </div>
+      </section>
 
       {/* Demo & Pitch Controls */}
       <section className="mb-8 p-5 bg-bg-secondary rounded-3xl border border-border-subtle shadow-sm">
@@ -142,18 +177,18 @@ export default function SettingsPage() {
 
         <div className="space-y-3">
           {/* Fast Demo Timing Toggle */}
-          <label className="flex items-center justify-between p-3.5 bg-bg-primary rounded-xl border border-border-subtle cursor-pointer">
+          <div className="flex items-center justify-between p-3.5 bg-bg-primary rounded-xl border border-border-subtle">
             <div>
               <span className="block text-sm font-medium">Fast Demo Mode (5s delays)</span>
               <span className="text-xs text-fg-secondary">Nudges trigger 5s after check-in instead of 36h</span>
             </div>
-            <input
-              type="checkbox"
-              className="w-5 h-5 text-mint-600 rounded bg-bg-primary border-border-subtle focus:ring-0"
+            <CustomToggle
+              id="fast-timing-toggle"
               checked={fastTiming}
-              onChange={(e) => handleToggleFastTiming(e.target.checked)}
+              onChange={handleToggleFastTiming}
+              ariaLabel="Fast Demo Mode"
             />
-          </label>
+          </div>
 
           {/* Trigger Extreme Nudge */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 p-3.5 bg-bg-primary rounded-xl border border-border-subtle">
@@ -214,6 +249,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {/* Appearance Section */}
       <section className="mb-8">
         <h2 className="text-lg font-medium mb-4 text-teal-800 dark:text-teal-100">Appearance</h2>
 
@@ -253,36 +289,43 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {/* Accessibility Section with CustomToggle */}
       <section className="mb-8">
         <h2 className="text-lg font-medium mb-4 text-teal-800 dark:text-teal-100">Accessibility</h2>
         <div className="space-y-4">
-          <label className="flex items-center justify-between p-4 bg-bg-secondary rounded-2xl border border-border-subtle cursor-pointer focus-within:ring-2 focus-within:ring-border-focus focus-within:ring-offset-2 focus-within:ring-offset-bg-primary">
+          <div className="flex items-center justify-between p-4 bg-bg-secondary rounded-2xl border border-border-subtle">
             <div>
               <span className="block font-medium">High Contrast</span>
               <span className="text-sm text-fg-secondary">Increase contrast across the app</span>
             </div>
-            <input
-              type="checkbox"
-              className="w-5 h-5 text-mint-600 rounded bg-bg-primary border-border-subtle focus:ring-0 focus:outline-none"
+            <CustomToggle
+              id="high-contrast-toggle"
               checked={highContrast}
-              onChange={(e) => setHighContrast(e.target.checked)}
+              onChange={setHighContrast}
+              ariaLabel="High Contrast"
             />
-          </label>
+          </div>
 
-          <label className="flex items-center justify-between p-4 bg-bg-secondary rounded-2xl border border-border-subtle cursor-pointer focus-within:ring-2 focus-within:ring-border-focus focus-within:ring-offset-2 focus-within:ring-offset-bg-primary">
+          <div className="flex items-center justify-between p-4 bg-bg-secondary rounded-2xl border border-border-subtle">
             <div>
               <span className="block font-medium">Reduce Motion</span>
               <span className="text-sm text-fg-secondary">Minimize animations and transitions</span>
             </div>
-            <input
-              type="checkbox"
-              className="w-5 h-5 text-mint-600 rounded bg-bg-primary border-border-subtle focus:ring-0 focus:outline-none"
+            <CustomToggle
+              id="reduce-motion-toggle"
               checked={reduceMotion}
-              onChange={(e) => setReduceMotion(e.target.checked)}
+              onChange={setReduceMotion}
+              ariaLabel="Reduce Motion"
             />
-          </label>
+          </div>
         </div>
       </section>
+
+      {/* University Selection Modal */}
+      <UniversitySelectModal
+        isOpen={univModalOpen}
+        onClose={() => setUnivModalOpen(false)}
+      />
     </div>
   );
 }
